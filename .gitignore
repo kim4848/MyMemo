@@ -1,0 +1,54 @@
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Editor / IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+dist/
+build/
+.next/
+.nuxt/
+out/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.DotSettings.user
+packages/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+
+# Coverage and testing
+coverage/
+.nyc_output/
+htmlcov/
+TestResults/
