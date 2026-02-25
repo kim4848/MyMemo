@@ -16,12 +16,14 @@ export function setTokenProvider(provider: TokenProvider) {
 }
 
 export class ApiError extends Error {
-  constructor(
-    public status: number,
-    public body: string,
-  ) {
+  status: number;
+  body: string;
+
+  constructor(status: number, body: string) {
     super(`API error ${status}: ${body}`);
     this.name = 'ApiError';
+    this.status = status;
+    this.body = body;
   }
 }
 
