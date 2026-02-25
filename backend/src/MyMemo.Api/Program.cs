@@ -38,6 +38,8 @@ app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 SessionEndpoints.Map(app);
+ChunkEndpoints.Map(app);
+MemoEndpoints.Map(app);
 
 app.Run();
 
