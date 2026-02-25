@@ -1,5 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
+COPY ["Directory.Build.props", "./"]
+COPY ["global.json", "./"]
 COPY ["src/MyMemo.Shared/MyMemo.Shared.csproj", "src/MyMemo.Shared/"]
 COPY ["src/MyMemo.Api/MyMemo.Api.csproj", "src/MyMemo.Api/"]
 RUN dotnet restore "src/MyMemo.Api/MyMemo.Api.csproj"
