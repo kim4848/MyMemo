@@ -27,6 +27,8 @@ public class ClerkAuthTests : IClassFixture<WebApplicationFactory<Program>>
                 var connString = $"Data Source={dbName};Mode=Memory;Cache=Shared";
                 var keepAlive = new Microsoft.Data.Sqlite.SqliteConnection(connString);
                 keepAlive.Open();
+                // Register in DI to prevent GC from closing the connection
+                services.AddSingleton(keepAlive);
                 var dbFactory = new SqliteConnectionFactory(connString);
                 DatabaseInitializer.Initialize(dbFactory).GetAwaiter().GetResult();
                 services.AddSingleton<IDbConnectionFactory>(dbFactory);

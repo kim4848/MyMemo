@@ -1,4 +1,5 @@
 using MyMemo.Api.Auth;
+using MyMemo.Api.Endpoints;
 using MyMemo.Shared.Database;
 using MyMemo.Shared.Repositories;
 using MyMemo.Shared.Services;
@@ -36,8 +37,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
-app.MapGet("/api/sessions", () => Results.Ok(Array.Empty<object>()))
-    .RequireAuthorization();
+SessionEndpoints.Map(app);
 
 app.Run();
 
