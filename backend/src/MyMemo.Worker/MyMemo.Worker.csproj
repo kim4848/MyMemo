@@ -4,4 +4,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\MyMemo.Shared\MyMemo.Shared.csproj" />
+  </ItemGroup>
+
 </Project>
