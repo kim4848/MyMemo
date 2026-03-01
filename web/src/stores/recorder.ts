@@ -41,6 +41,7 @@ const CHUNK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 let audioService: AudioCaptureService | null = null;
 let mediaRecorder: MediaRecorder | null = null;
 let timerInterval: ReturnType<typeof setInterval> | null = null;
+let chunkInterval: ReturnType<typeof setInterval> | null = null;
 let startTime: number | null = null;
 const chunkCache = new ChunkCache();
 
@@ -88,7 +89,17 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
       }
     };
 
-    mediaRecorder.start(CHUNK_INTERVAL_MS);
+    // Start without timeslice — each start() produces a standalone file
+    // with its own WebM header. We stop/restart every CHUNK_INTERVAL_MS
+    // so Whisper receives valid files for every chunk.
+    mediaRecorder.start();
+
+    chunkInterval = setInterval(() => {
+      if (mediaRecorder?.state === 'recording') {
+        mediaRecorder.stop();   // fires ondataavailable with complete file
+        mediaRecorder.start();  // new recording = new WebM header
+      }
+    }, CHUNK_INTERVAL_MS);
 
     startTime = Date.now();
     timerInterval = setInterval(() => {
@@ -99,6 +110,8 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
   },
 
   stopRecording: () => {
+    if (chunkInterval) clearInterval(chunkInterval);
+    chunkInterval = null;
     mediaRecorder?.stop();
     audioService?.stop();
     if (timerInterval) clearInterval(timerInterval);
@@ -111,7 +124,12 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
     if (!sessionId) return;
 
     set({ status: 'finalizing' });
-    await api.memos.finalize(sessionId);
+    try {
+      await api.memos.finalize(sessionId);
+    } catch (err) {
+      set({ status: 'stopped' });
+      throw err;
+    }
   },
 
   addChunk: (chunk) =>
@@ -127,6 +145,8 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
   setElapsedMs: (ms) => set({ elapsedMs: ms }),
 
   reset: () => {
+    if (chunkInterval) clearInterval(chunkInterval);
+    chunkInterval = null;
     mediaRecorder?.stop();
     audioService?.stop();
     if (timerInterval) clearInterval(timerInterval);

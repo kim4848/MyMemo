@@ -2,6 +2,7 @@ using FluentAssertions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using MyMemo.Shared.Repositories;
+using Microsoft.Extensions.Logging.Abstractions;
 using MyMemo.Shared.Services;
 using MyMemo.Worker.Workers;
 
@@ -18,7 +19,7 @@ public class TranscriptionWorkerTests
 
     public TranscriptionWorkerTests()
     {
-        _sut = new TranscriptionProcessor(_chunks, _transcriptions, _blobService, _whisperService, _queueService);
+        _sut = new TranscriptionProcessor(_chunks, _transcriptions, _blobService, _whisperService, _queueService, NullLogger<TranscriptionProcessor>.Instance);
     }
 
     [Fact]

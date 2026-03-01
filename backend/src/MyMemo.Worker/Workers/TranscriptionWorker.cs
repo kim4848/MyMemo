@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Azure.Messaging.ServiceBus;
+using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
 using MyMemo.Shared.Repositories;
 using MyMemo.Shared.Services;
@@ -11,7 +11,8 @@ public sealed class TranscriptionProcessor(
     ITranscriptionRepository transcriptions,
     IBlobStorageService blobService,
     IWhisperService whisperService,
-    IQueueService queueService)
+    IQueueService queueService,
+    ILogger<TranscriptionProcessor> logger)
 {
     public async Task ProcessAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language)
     {
@@ -32,6 +33,8 @@ public sealed class TranscriptionProcessor(
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "Transcription failed for session {SessionId}, chunk {ChunkIndex} ({ChunkId})",
+                sessionId, chunkIndex, chunkId);
             await chunks.UpdateStatusAsync(chunkId, "failed", ex.Message);
         }
     }
@@ -39,43 +42,47 @@ public sealed class TranscriptionProcessor(
 
 public sealed class TranscriptionWorker(
     IServiceProvider serviceProvider,
-    IOptions<AzureServiceBusOptions> options,
+    IOptions<StorageQueueOptions> options,
     ILogger<TranscriptionWorker> logger) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var client = new ServiceBusClient(options.Value.ConnectionString);
-        var processor = client.CreateProcessor(options.Value.TranscriptionQueueName);
+        var queue = new QueueClient(options.Value.ConnectionString, options.Value.TranscriptionQueueName);
+        await queue.CreateIfNotExistsAsync(cancellationToken: stoppingToken);
 
-        processor.ProcessMessageAsync += async args =>
+        while (!stoppingToken.IsCancellationRequested)
         {
-            var body = JsonSerializer.Deserialize<TranscriptionJob>(args.Message.Body.ToString())!;
-            logger.LogInformation("Processing transcription job for session {SessionId}, chunk {ChunkIndex}", body.SessionId, body.ChunkIndex);
+            var response = await queue.ReceiveMessageAsync(cancellationToken: stoppingToken);
+            if (response.Value is null)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
+                continue;
+            }
 
-            using var scope = serviceProvider.CreateScope();
-            var transcriptionProcessor = new TranscriptionProcessor(
-                scope.ServiceProvider.GetRequiredService<IChunkRepository>(),
-                scope.ServiceProvider.GetRequiredService<ITranscriptionRepository>(),
-                scope.ServiceProvider.GetRequiredService<IBlobStorageService>(),
-                scope.ServiceProvider.GetRequiredService<IWhisperService>(),
-                scope.ServiceProvider.GetRequiredService<IQueueService>());
+            var message = response.Value;
+            try
+            {
+                var body = JsonSerializer.Deserialize<TranscriptionJob>(message.MessageText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+                logger.LogInformation("Processing transcription for session {SessionId}, chunk {ChunkIndex}",
+                    body.SessionId, body.ChunkIndex);
 
-            await transcriptionProcessor.ProcessAsync(body.SessionId, body.ChunkId, body.ChunkIndex, body.BlobPath, body.Language);
-            await args.CompleteMessageAsync(args.Message);
-        };
+                using var scope = serviceProvider.CreateScope();
+                var processor = new TranscriptionProcessor(
+                    scope.ServiceProvider.GetRequiredService<IChunkRepository>(),
+                    scope.ServiceProvider.GetRequiredService<ITranscriptionRepository>(),
+                    scope.ServiceProvider.GetRequiredService<IBlobStorageService>(),
+                    scope.ServiceProvider.GetRequiredService<IWhisperService>(),
+                    scope.ServiceProvider.GetRequiredService<IQueueService>(),
+                    scope.ServiceProvider.GetRequiredService<ILogger<TranscriptionProcessor>>());
 
-        processor.ProcessErrorAsync += args =>
-        {
-            logger.LogError(args.Exception, "Service Bus processing error");
-            return Task.CompletedTask;
-        };
-
-        await processor.StartProcessingAsync(stoppingToken);
-
-        try { await Task.Delay(Timeout.Infinite, stoppingToken); }
-        catch (OperationCanceledException) { }
-
-        await processor.StopProcessingAsync();
+                await processor.ProcessAsync(body.SessionId, body.ChunkId, body.ChunkIndex, body.BlobPath, body.Language);
+                await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error processing transcription message");
+            }
+        }
     }
 
     private sealed record TranscriptionJob(string SessionId, string ChunkId, int ChunkIndex, string BlobPath, string Language);

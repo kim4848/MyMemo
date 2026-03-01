@@ -9,20 +9,33 @@ public sealed class UserRepository(IDbConnectionFactory db) : IUserRepository
     public async Task<User> GetOrCreateByClerkIdAsync(string clerkId, string email, string name)
     {
         using var conn = await db.CreateConnectionAsync();
-        var existing = await conn.QuerySingleOrDefaultAsync<User>(
-            "SELECT id AS Id, email AS Email, name AS Name, clerk_id AS ClerkId, created_at AS CreatedAt, updated_at AS UpdatedAt FROM users WHERE clerk_id = @clerkId",
-            new { clerkId });
+        const string selectSql = "SELECT id AS Id, email AS Email, name AS Name, clerk_id AS ClerkId, created_at AS CreatedAt, updated_at AS UpdatedAt FROM users";
 
+        var existing = await conn.QuerySingleOrDefaultAsync<User>(
+            $"{selectSql} WHERE clerk_id = @clerkId", new { clerkId });
         if (existing is not null)
             return existing;
 
-        var id = Guid.NewGuid().ToString("N");
-        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
-        await conn.ExecuteAsync(
-            "INSERT INTO users (id, email, name, clerk_id, created_at, updated_at) VALUES (@id, @email, @name, @clerkId, @now, @now)",
-            new { id, email, name, clerkId, now });
+        // Email might exist with a different clerk_id (e.g. dev DB was recreated)
+        existing = await conn.QuerySingleOrDefaultAsync<User>(
+            $"{selectSql} WHERE email = @email", new { email });
+        if (existing is not null)
+        {
+            var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+            await conn.ExecuteAsync(
+                "UPDATE users SET clerk_id = @clerkId, name = @name, updated_at = @now WHERE email = @email",
+                new { clerkId, name, now, email });
+            return (await conn.QuerySingleAsync<User>($"{selectSql} WHERE clerk_id = @clerkId", new { clerkId }));
+        }
 
-        return new User { Id = id, Email = email, Name = name, ClerkId = clerkId, CreatedAt = now, UpdatedAt = now };
+        {
+            var id = Guid.NewGuid().ToString("N");
+            var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+            await conn.ExecuteAsync(
+                "INSERT INTO users (id, email, name, clerk_id, created_at, updated_at) VALUES (@id, @email, @name, @clerkId, @now, @now)",
+                new { id, email, name, clerkId, now });
+            return new User { Id = id, Email = email, Name = name, ClerkId = clerkId, CreatedAt = now, UpdatedAt = now };
+        }
     }
 
     public async Task<User?> GetByIdAsync(string id)

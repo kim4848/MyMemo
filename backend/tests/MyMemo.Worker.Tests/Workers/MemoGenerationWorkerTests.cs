@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using MyMemo.Shared.Models;
@@ -11,6 +12,7 @@ namespace MyMemo.Worker.Tests.Workers;
 public class MemoGenerationWorkerTests
 {
     private readonly ISessionRepository _sessions = Substitute.For<ISessionRepository>();
+    private readonly IChunkRepository _chunks = Substitute.For<IChunkRepository>();
     private readonly ITranscriptionRepository _transcriptions = Substitute.For<ITranscriptionRepository>();
     private readonly IMemoRepository _memos = Substitute.For<IMemoRepository>();
     private readonly IMemoGeneratorService _memoGenerator = Substitute.For<IMemoGeneratorService>();
@@ -18,7 +20,8 @@ public class MemoGenerationWorkerTests
 
     public MemoGenerationWorkerTests()
     {
-        _sut = new MemoGenerationProcessor(_sessions, _transcriptions, _memos, _memoGenerator);
+        _chunks.AreAllTranscribedAsync(Arg.Any<string>()).Returns(true);
+        _sut = new MemoGenerationProcessor(_sessions, _chunks, _transcriptions, _memos, _memoGenerator, NullLogger<MemoGenerationProcessor>.Instance);
     }
 
     [Fact]

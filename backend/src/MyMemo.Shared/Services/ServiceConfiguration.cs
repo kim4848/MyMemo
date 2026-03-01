@@ -6,7 +6,7 @@ public sealed class AzureBlobOptions
     public string ContainerName { get; init; } = "audio-chunks";
 }
 
-public sealed class AzureServiceBusOptions
+public sealed class StorageQueueOptions
 {
     public required string ConnectionString { get; init; }
     public string TranscriptionQueueName { get; init; } = "transcription-jobs";
