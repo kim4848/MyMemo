@@ -36,7 +36,7 @@ interface RecorderState {
   reset: () => void;
 }
 
-const CHUNK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+const CHUNK_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 
 let audioService: AudioCaptureService | null = null;
 let mediaRecorder: MediaRecorder | null = null;
@@ -120,8 +120,20 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
   },
 
   finalize: async () => {
-    const { sessionId } = get();
+    const { sessionId, chunks } = get();
     if (!sessionId) return;
+
+    const incomplete = chunks.filter(
+      (c) => c.status === 'pending' || c.status === 'uploading',
+    );
+    if (incomplete.length > 0) {
+      throw new Error('Cannot finalize: chunks still uploading');
+    }
+
+    const failed = chunks.filter((c) => c.status === 'failed');
+    if (failed.length > 0) {
+      throw new Error('Cannot finalize: some chunks failed to upload');
+    }
 
     set({ status: 'finalizing' });
     try {

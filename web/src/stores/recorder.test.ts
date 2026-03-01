@@ -186,15 +186,15 @@ describe('multi-chunk recording', () => {
     expect(mockMediaRecorder.start).toHaveBeenCalledTimes(1);
     expect(mockMediaRecorder.stop).not.toHaveBeenCalled();
 
-    // Advance to first chunk boundary (5 minutes)
-    vi.advanceTimersByTime(5 * 60 * 1000);
+    // Advance to first chunk boundary (3 minutes)
+    vi.advanceTimersByTime(3 * 60 * 1000);
 
     // stop() fires ondataavailable (chunk 0), then start() begins chunk 1
     expect(mockMediaRecorder.stop).toHaveBeenCalledTimes(1);
     expect(mockMediaRecorder.start).toHaveBeenCalledTimes(2);
 
     // Advance to second chunk boundary
-    vi.advanceTimersByTime(5 * 60 * 1000);
+    vi.advanceTimersByTime(3 * 60 * 1000);
 
     expect(mockMediaRecorder.stop).toHaveBeenCalledTimes(2);
     expect(mockMediaRecorder.start).toHaveBeenCalledTimes(3);
@@ -207,7 +207,7 @@ describe('multi-chunk recording', () => {
     await useRecorderStore.getState().startRecording();
 
     // First chunk boundary — stop fires ondataavailable
-    vi.advanceTimersByTime(5 * 60 * 1000);
+    vi.advanceTimersByTime(3 * 60 * 1000);
     await vi.waitFor(() => {
       expect(api.chunks.upload).toHaveBeenCalledTimes(1);
     });
@@ -215,7 +215,7 @@ describe('multi-chunk recording', () => {
     expect(vi.mocked(api.chunks.upload).mock.calls[0][2]).toBe(0); // chunkIndex 0
 
     // Second chunk boundary
-    vi.advanceTimersByTime(5 * 60 * 1000);
+    vi.advanceTimersByTime(3 * 60 * 1000);
     await vi.waitFor(() => {
       expect(api.chunks.upload).toHaveBeenCalledTimes(2);
     });
@@ -258,7 +258,7 @@ describe('multi-chunk recording', () => {
     await useRecorderStore.getState().startRecording();
 
     // Trigger first chunk
-    vi.advanceTimersByTime(5 * 60 * 1000);
+    vi.advanceTimersByTime(3 * 60 * 1000);
     await vi.waitFor(() => {
       expect(api.chunks.upload).toHaveBeenCalledTimes(1);
     });
@@ -307,5 +307,57 @@ describe('multi-chunk recording', () => {
     // No more stop/start cycles after reset
     expect(mockMediaRecorder.stop).toHaveBeenCalledTimes(stopCallCount);
     expect(mockMediaRecorder.start).toHaveBeenCalledTimes(startCallCount);
+  });
+});
+
+describe('finalize guards', () => {
+  test('finalize throws when chunks still uploading', async () => {
+    useRecorderStore.setState({
+      status: 'stopped',
+      sessionId: 'sess-1',
+      chunks: [
+        { chunkIndex: 0, status: 'uploaded' },
+        { chunkIndex: 1, status: 'uploading' },
+      ],
+    });
+
+    await expect(useRecorderStore.getState().finalize()).rejects.toThrow(
+      'Cannot finalize: chunks still uploading',
+    );
+    expect(api.memos.finalize).not.toHaveBeenCalled();
+  });
+
+  test('finalize throws when chunks failed', async () => {
+    useRecorderStore.setState({
+      status: 'stopped',
+      sessionId: 'sess-1',
+      chunks: [
+        { chunkIndex: 0, status: 'uploaded' },
+        { chunkIndex: 1, status: 'failed' },
+      ],
+    });
+
+    await expect(useRecorderStore.getState().finalize()).rejects.toThrow(
+      'Cannot finalize: some chunks failed to upload',
+    );
+    expect(api.memos.finalize).not.toHaveBeenCalled();
+  });
+
+  test('finalize calls API when all chunks uploaded', async () => {
+    vi.mocked(api.memos.finalize).mockResolvedValue({} as never);
+
+    useRecorderStore.setState({
+      status: 'stopped',
+      sessionId: 'sess-1',
+      chunks: [
+        { chunkIndex: 0, status: 'uploaded' },
+        { chunkIndex: 1, status: 'uploaded' },
+      ],
+    });
+
+    await useRecorderStore.getState().finalize();
+
+    expect(api.memos.finalize).toHaveBeenCalledWith('sess-1');
+    expect(useRecorderStore.getState().status).toBe('finalizing');
   });
 });

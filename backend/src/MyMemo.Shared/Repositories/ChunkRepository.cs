@@ -62,4 +62,25 @@ public sealed class ChunkRepository(IDbConnectionFactory db) : IChunkRepository
             new { sessionId });
         return count == 0;
     }
+
+    public async Task<int> CountBySessionAsync(string sessionId)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        return await conn.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM chunks WHERE session_id = @sessionId",
+            new { sessionId });
+    }
+
+    public async Task<(int Count, bool AllTranscribed)> GetTranscriptionStatusAsync(string sessionId)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var result = await conn.QuerySingleAsync<(int Total, int Untranscribed)>(
+            """
+            SELECT COUNT(*) AS Total,
+                   SUM(CASE WHEN status != 'transcribed' THEN 1 ELSE 0 END) AS Untranscribed
+            FROM chunks WHERE session_id = @sessionId
+            """,
+            new { sessionId });
+        return (result.Total, result.Untranscribed == 0);
+    }
 }

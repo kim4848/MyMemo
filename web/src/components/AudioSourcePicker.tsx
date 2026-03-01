@@ -48,6 +48,7 @@ export default function AudioSourcePicker({
         >
           <option value="full">Full Transcript</option>
           <option value="summary">Summary</option>
+          <option value="product-planning">Product Planning</option>
         </select>
       </div>
     </div>

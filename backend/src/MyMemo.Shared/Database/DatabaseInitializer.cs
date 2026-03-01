@@ -12,6 +12,19 @@ public static class DatabaseInitializer
 
         var schema = GetEmbeddedSchema();
         await connection.ExecuteAsync(schema);
+
+        // Idempotent migrations: ALTER TABLE throws if column already exists
+        string[] migrations =
+        [
+            "ALTER TABLE transcriptions ADD COLUMN transcription_duration_ms INTEGER",
+            "ALTER TABLE memos ADD COLUMN generation_duration_ms INTEGER",
+            "ALTER TABLE sessions ADD COLUMN memo_queued INTEGER NOT NULL DEFAULT 0",
+        ];
+        foreach (var sql in migrations)
+        {
+            try { await connection.ExecuteAsync(sql); }
+            catch { /* Column already exists — ignore */ }
+        }
     }
 
     private static string GetEmbeddedSchema()

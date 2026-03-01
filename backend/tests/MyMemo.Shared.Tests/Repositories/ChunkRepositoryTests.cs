@@ -89,5 +89,66 @@ public class ChunkRepositoryTests : IDisposable
         result.Should().BeFalse();
     }
 
+    [Fact]
+    public async Task CountBySessionAsync_ReturnsZero_WhenNoChunks()
+    {
+        var sessionId = await CreateTestSession();
+
+        var count = await _sut.CountBySessionAsync(sessionId);
+
+        count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CountBySessionAsync_ReturnsCorrectCount()
+    {
+        var sessionId = await CreateTestSession();
+        await _sut.CreateAsync(sessionId, 0, "path/0.webm");
+        await _sut.CreateAsync(sessionId, 1, "path/1.webm");
+
+        var count = await _sut.CountBySessionAsync(sessionId);
+
+        count.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task GetTranscriptionStatusAsync_ReturnsCombinedStatus()
+    {
+        var sessionId = await CreateTestSession();
+        var c1 = await _sut.CreateAsync(sessionId, 0, "path/0.webm");
+        await _sut.CreateAsync(sessionId, 1, "path/1.webm");
+
+        await _sut.UpdateStatusAsync(c1.Id, "transcribed");
+
+        var (count, allTranscribed) = await _sut.GetTranscriptionStatusAsync(sessionId);
+        count.Should().Be(2);
+        allTranscribed.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetTranscriptionStatusAsync_AllTranscribed()
+    {
+        var sessionId = await CreateTestSession();
+        var c1 = await _sut.CreateAsync(sessionId, 0, "path/0.webm");
+        var c2 = await _sut.CreateAsync(sessionId, 1, "path/1.webm");
+
+        await _sut.UpdateStatusAsync(c1.Id, "transcribed");
+        await _sut.UpdateStatusAsync(c2.Id, "transcribed");
+
+        var (count, allTranscribed) = await _sut.GetTranscriptionStatusAsync(sessionId);
+        count.Should().Be(2);
+        allTranscribed.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetTranscriptionStatusAsync_ZeroChunks()
+    {
+        var sessionId = await CreateTestSession();
+
+        var (count, allTranscribed) = await _sut.GetTranscriptionStatusAsync(sessionId);
+        count.Should().Be(0);
+        allTranscribed.Should().BeTrue();
+    }
+
     public void Dispose() => _db.Dispose();
 }

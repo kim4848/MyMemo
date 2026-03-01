@@ -1,7 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api } from '../api/client';
-import type { SessionDetail, Memo, ChunkStatus } from '../types';
+import type { SessionDetail, Memo, ChunkStatus, OutputMode } from '../types';
+import { outputModeLabels } from '../types';
 import MemoViewer from '../components/MemoViewer';
 
 const chunkStatusStyles: Record<ChunkStatus, string> = {
@@ -25,6 +26,8 @@ export default function SessionDetailPage() {
   const [memo, setMemo] = useState<Memo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMode, setSelectedMode] = useState<OutputMode>('full');
+  const [regenerating, setRegenerating] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
@@ -34,6 +37,7 @@ export default function SessionDetailPage() {
       try {
         const data = await api.sessions.get(id!);
         setDetail(data);
+        setSelectedMode(data.session.outputMode);
 
         try {
           const m = await api.memos.get(id!);
@@ -51,31 +55,35 @@ export default function SessionDetailPage() {
     load();
   }, [id]);
 
-  // Poll for memo when session is processing
+  // Poll for session detail + memo when session is processing
   useEffect(() => {
     if (!id || !detail || detail.session.status !== 'processing') return;
     if (memo) return;
 
     pollRef.current = setInterval(async () => {
       try {
-        const m = await api.memos.get(id);
-        setMemo(m);
-        setDetail((prev) =>
-          prev
-            ? {
-                ...prev,
-                session: { ...prev.session, status: 'completed' },
-              }
-            : prev,
-        );
-        clearInterval(pollRef.current);
+        const [updatedDetail, memoResult] = await Promise.all([
+          api.sessions.get(id),
+          api.memos.get(id).catch(() => null),
+        ]);
+
+        if (memoResult) {
+          setMemo(memoResult);
+          setDetail({
+            ...updatedDetail,
+            session: { ...updatedDetail.session, status: 'completed' },
+          });
+          clearInterval(pollRef.current);
+        } else {
+          setDetail(updatedDetail);
+        }
       } catch {
-        // Still processing
+        // Poll failed — retry next interval
       }
     }, 5000);
 
     return () => clearInterval(pollRef.current);
-  }, [id, detail, memo]);
+  }, [id, detail?.session.status, memo]);
 
   if (loading) {
     return <div className="py-8 text-center text-gray-500">Loading...</div>;
@@ -110,8 +118,26 @@ export default function SessionDetailPage() {
       </div>
 
       <div className="text-sm text-gray-500">
-        {session.outputMode === 'full' ? 'Full Transcript' : 'Summary'} &middot; {session.audioSource}
+        {outputModeLabels[session.outputMode]} &middot; {session.audioSource}
       </div>
+
+      {session.status === 'processing' && chunks.length > 0 && (() => {
+        const transcribed = chunks.filter((c) => c.status === 'transcribed').length;
+        const allTranscribed = transcribed === chunks.length;
+        return (
+          <div className="space-y-2">
+            <p className="text-sm text-gray-400">
+              {allTranscribed ? 'Generating memo...' : `Transcribing: ${transcribed} / ${chunks.length} chunks`}
+            </p>
+            <div className="h-2 overflow-hidden rounded-full bg-navy-700">
+              <div
+                className="h-full rounded-full bg-accent transition-all duration-500"
+                style={{ width: `${(transcribed / chunks.length) * 100}%` }}
+              />
+            </div>
+          </div>
+        );
+      })()}
 
       {chunks.length > 0 && (
         <div className="rounded-xl border border-navy-700 bg-navy-800 p-5">
@@ -122,19 +148,62 @@ export default function SessionDetailPage() {
                 key={chunk.id}
                 className="flex items-center gap-3 text-sm"
               >
-                <span className={`font-medium ${chunkStatusStyles[chunk.status]}`}>
+                <span className={`font-medium transition-colors duration-300 ${chunkStatusStyles[chunk.status]}`}>
                   Chunk {chunk.chunkIndex + 1}
                 </span>
-                <span className="text-gray-600">{chunk.status}</span>
+                <span className="transition-colors duration-300 text-gray-600">{chunk.status}</span>
+                {detail.transcriptionDurations[chunk.id] != null && (
+                  <span className="text-gray-600">
+                    ({detail.transcriptionDurations[chunk.id] >= 1000
+                      ? `${(detail.transcriptionDurations[chunk.id] / 1000).toFixed(1)}s`
+                      : `${detail.transcriptionDurations[chunk.id]}ms`})
+                  </span>
+                )}
               </div>
             ))}
           </div>
         </div>
       )}
 
+      {(session.status === 'completed' || session.status === 'failed') && memo && (
+        <div className="flex items-center gap-3">
+          <select
+            aria-label="Output mode"
+            value={selectedMode}
+            onChange={(e) => setSelectedMode(e.target.value as OutputMode)}
+            className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-2 text-sm text-gray-200 outline-none focus:border-accent"
+          >
+            {Object.entries(outputModeLabels).map(([value, label]) => (
+              <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+          <button
+            disabled={selectedMode === memo.outputMode || regenerating}
+            onClick={async () => {
+              if (!id) return;
+              setRegenerating(true);
+              try {
+                await api.memos.regenerate(id, selectedMode);
+                setMemo(null);
+                setDetail((prev) =>
+                  prev ? { ...prev, session: { ...prev.session, status: 'processing', outputMode: selectedMode } } : prev,
+                );
+              } finally {
+                setRegenerating(false);
+              }
+            }}
+            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-navy-900 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Regenerate
+          </button>
+        </div>
+      )}
+
       <MemoViewer
         memo={memo}
         isProcessing={session.status === 'processing'}
+        allTranscribed={chunks.length > 0 && chunks.every((c) => c.status === 'transcribed')}
+        session={session}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import type {
   Chunk,
   Memo,
   CreateSessionRequest,
+  OutputMode,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
@@ -88,5 +89,12 @@ export const api = {
       }),
     get: (sessionId: string) =>
       request<Memo>(`/api/sessions/${sessionId}/memo`),
+    regenerate: (sessionId: string, outputMode: OutputMode) =>
+      request<void>(`/api/sessions/${sessionId}/regenerate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outputMode }),
+        noContent: true,
+      }),
   },
 };

@@ -9,5 +9,6 @@ public sealed class Memo
     public required string ModelUsed { get; init; }
     public int? PromptTokens { get; init; }
     public int? CompletionTokens { get; init; }
+    public long? GenerationDurationMs { get; init; }
     public required string CreatedAt { get; init; }
 }

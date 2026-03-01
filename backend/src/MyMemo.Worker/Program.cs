@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Options;
 using MyMemo.Shared.Database;
 using MyMemo.Shared.Repositories;
 using MyMemo.Shared.Services;
@@ -23,6 +24,7 @@ builder.Services.Configure<StorageQueueOptions>(builder.Configuration.GetSection
 builder.Services.Configure<AzureOpenAIOptions>(builder.Configuration.GetSection("AzureOpenAI"));
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 builder.Services.AddSingleton<IQueueService, QueueService>();
+builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
 builder.Services.AddSingleton<IWhisperService, WhisperService>();
 builder.Services.AddSingleton<IMemoGeneratorService, MemoGeneratorService>();
 
@@ -35,5 +37,11 @@ var host = builder.Build();
 // Initialize database
 var dbFactory = host.Services.GetRequiredService<IDbConnectionFactory>();
 await DatabaseInitializer.Initialize(dbFactory);
+
+// Log configured model names
+var openAiOptions = host.Services.GetRequiredService<IOptions<AzureOpenAIOptions>>().Value;
+var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+logger.LogInformation("Whisper deployment: {WhisperDeployment}, GPT deployment: {GptDeployment}",
+    openAiOptions.WhisperDeployment, openAiOptions.GptDeployment);
 
 host.Run();

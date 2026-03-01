@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
@@ -14,35 +15,53 @@ public sealed class MemoGenerationProcessor(
     IMemoGeneratorService memoGenerator,
     ILogger<MemoGenerationProcessor> logger)
 {
-    public async Task ProcessAsync(string sessionId)
+    /// <returns>true if the job was handled (success, duplicate, or permanent skip); false if it should be retried.</returns>
+    public async Task<bool> ProcessAsync(string sessionId)
     {
         try
         {
             var session = await sessions.GetByIdAsync(sessionId);
-            if (session is null) return;
+            if (session is null) return true;
+
+            // Never generate while still recording
+            if (session.Status == "recording")
+            {
+                logger.LogInformation("Session {SessionId} still recording, will retry", sessionId);
+                return false;
+            }
 
             // Idempotency: skip if memo already exists (handles double-queuing race)
             var existingMemo = await memos.GetBySessionIdAsync(sessionId);
             if (existingMemo is not null)
             {
                 await sessions.UpdateStatusAsync(sessionId, "completed");
-                return;
+                return true;
             }
 
-            // Guard: ensure all chunks are transcribed before generating memo
-            if (!await chunks.AreAllTranscribedAsync(sessionId))
+            // Guard: ensure session has chunks and all are transcribed (single query)
+            var (chunkCount, allTranscribed) = await chunks.GetTranscriptionStatusAsync(sessionId);
+            if (chunkCount == 0)
             {
-                logger.LogWarning("Not all chunks transcribed for session {SessionId}, skipping memo generation", sessionId);
-                return;
+                logger.LogWarning("Session {SessionId} has zero chunks, skipping memo generation", sessionId);
+                return true;
+            }
+
+            if (!allTranscribed)
+            {
+                logger.LogInformation("Not all chunks transcribed for session {SessionId}, will retry", sessionId);
+                return false;
             }
 
             var allTranscriptions = await transcriptions.ListBySessionAsync(sessionId);
             var fullText = string.Join("\n\n", allTranscriptions.Select(t => t.RawText));
 
+            var sw = Stopwatch.StartNew();
             var result = await memoGenerator.GenerateAsync(fullText, session.OutputMode);
+            sw.Stop();
 
-            await memos.CreateAsync(sessionId, session.OutputMode, result.Content, result.ModelUsed, result.PromptTokens, result.CompletionTokens);
+            await memos.CreateAsync(sessionId, session.OutputMode, result.Content, result.ModelUsed, result.PromptTokens, result.CompletionTokens, sw.ElapsedMilliseconds);
             await sessions.UpdateStatusAsync(sessionId, "completed");
+            return true;
         }
         catch (Exception ex)
         {
@@ -51,11 +70,12 @@ public sealed class MemoGenerationProcessor(
             if (existingMemo is not null)
             {
                 await sessions.UpdateStatusAsync(sessionId, "completed");
-                return;
+                return true;
             }
 
             logger.LogError(ex, "Memo generation failed for session {SessionId}", sessionId);
             await sessions.UpdateStatusAsync(sessionId, "failed");
+            return true;
         }
     }
 }
@@ -94,8 +114,9 @@ public sealed class MemoGenerationWorker(
                     scope.ServiceProvider.GetRequiredService<IMemoGeneratorService>(),
                     scope.ServiceProvider.GetRequiredService<ILogger<MemoGenerationProcessor>>());
 
-                await processor.ProcessAsync(body.SessionId);
-                await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
+                var handled = await processor.ProcessAsync(body.SessionId);
+                if (handled)
+                    await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
             }
             catch (Exception ex)
             {

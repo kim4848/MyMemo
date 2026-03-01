@@ -6,13 +6,38 @@ using OpenAI.Audio;
 
 namespace MyMemo.Shared.Services;
 
-public sealed class WhisperService(IOptions<AzureOpenAIOptions> options) : IWhisperService
+public class WhisperService : IWhisperService
 {
+    private readonly Lazy<AudioClient> _audioClient;
+
+    public WhisperService(IOptions<AzureOpenAIOptions> options)
+    {
+        _audioClient = new Lazy<AudioClient>(() =>
+        {
+            var credential = new ApiKeyCredential(options.Value.ApiKey);
+            var client = new AzureOpenAIClient(new Uri(options.Value.Endpoint), credential);
+            return client.GetAudioClient(options.Value.WhisperDeployment);
+        });
+    }
+
+    protected WhisperService(AudioClient audioClient)
+    {
+        _audioClient = new Lazy<AudioClient>(audioClient);
+    }
+
     public async Task<WhisperResult> TranscribeAsync(Stream audioStream, string language = "da")
     {
-        var credential = new ApiKeyCredential(options.Value.ApiKey);
-        var client = new AzureOpenAIClient(new Uri(options.Value.Endpoint), credential);
-        var audioClient = client.GetAudioClient(options.Value.WhisperDeployment);
+        // Buffer into MemoryStream so the SDK's retry policy can re-read the stream
+        var memoryStream = new MemoryStream();
+        await audioStream.CopyToAsync(memoryStream);
+        memoryStream.Position = 0;
+
+        return await TranscribeBufferedAsync(memoryStream, language);
+    }
+
+    protected virtual async Task<WhisperResult> TranscribeBufferedAsync(MemoryStream audioStream, string language)
+    {
+        var audioClient = _audioClient.Value;
 
         var transcriptionOptions = new AudioTranscriptionOptions
         {

@@ -8,5 +8,6 @@ public sealed class Transcription
     public string Language { get; init; } = "da";
     public double? Confidence { get; init; }
     public string? WordTimestamps { get; init; }
+    public long? TranscriptionDurationMs { get; init; }
     public required string CreatedAt { get; init; }
 }

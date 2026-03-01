@@ -20,7 +20,7 @@ public class MemoGenerationWorkerTests
 
     public MemoGenerationWorkerTests()
     {
-        _chunks.AreAllTranscribedAsync(Arg.Any<string>()).Returns(true);
+        _chunks.GetTranscriptionStatusAsync(Arg.Any<string>()).Returns((2, true));
         _sut = new MemoGenerationProcessor(_sessions, _chunks, _transcriptions, _memos, _memoGenerator, NullLogger<MemoGenerationProcessor>.Instance);
     }
 
@@ -41,11 +41,12 @@ public class MemoGenerationWorkerTests
         });
 
         _memoGenerator.GenerateAsync("Hej med dig.\n\nHvordan går det?", "full")
-            .Returns(new MemoResult("Renskrevet memo", "gpt-4.1-nano", 100, 50));
+            .Returns(new MemoResult("Renskrevet memo", "gpt-4.1-mini", 100, 50));
 
-        await _sut.ProcessAsync("session-1");
+        var result = await _sut.ProcessAsync("session-1");
 
-        await _memos.Received(1).CreateAsync("session-1", "full", "Renskrevet memo", "gpt-4.1-nano", 100, 50);
+        result.Should().BeTrue();
+        await _memos.Received(1).CreateAsync("session-1", "full", "Renskrevet memo", "gpt-4.1-mini", 100, 50, Arg.Any<long?>());
         await _sessions.Received(1).UpdateStatusAsync("session-1", "completed");
     }
 
@@ -63,8 +64,71 @@ public class MemoGenerationWorkerTests
         _memoGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<string>())
             .Throws(new Exception("LLM error"));
 
-        await _sut.ProcessAsync("session-1");
+        var result = await _sut.ProcessAsync("session-1");
 
+        result.Should().BeTrue();
         await _sessions.Received(1).UpdateStatusAsync("session-1", "failed");
+    }
+
+    [Fact]
+    public async Task ProcessAsync_GeneratesMemoWithProductPlanningMode()
+    {
+        _sessions.GetByIdAsync("session-1").Returns(new Session
+        {
+            Id = "session-1", UserId = "user-1", Status = "processing",
+            OutputMode = "product-planning", AudioSource = "microphone",
+            StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
+        });
+
+        _transcriptions.ListBySessionAsync("session-1").Returns(new List<Transcription>
+        {
+            new() { Id = "t1", ChunkId = "c1", RawText = "Vi skal bygge en ny feature.", CreatedAt = "2026-01-01 00:00:00" }
+        });
+
+        _memoGenerator.GenerateAsync("Vi skal bygge en ny feature.", "product-planning")
+            .Returns(new MemoResult("Produktplan", "gpt-4.1-mini", 80, 40));
+
+        var result = await _sut.ProcessAsync("session-1");
+
+        result.Should().BeTrue();
+        await _memos.Received(1).CreateAsync("session-1", "product-planning", "Produktplan", "gpt-4.1-mini", 80, 40, Arg.Any<long?>());
+        await _sessions.Received(1).UpdateStatusAsync("session-1", "completed");
+    }
+
+    [Fact]
+    public async Task ProcessAsync_SkipsMemoGeneration_WhenZeroChunks()
+    {
+        _chunks.GetTranscriptionStatusAsync("session-1").Returns((0, true));
+
+        _sessions.GetByIdAsync("session-1").Returns(new Session
+        {
+            Id = "session-1", UserId = "user-1", Status = "processing",
+            OutputMode = "full", AudioSource = "microphone",
+            StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
+        });
+
+        var result = await _sut.ProcessAsync("session-1");
+
+        result.Should().BeTrue();
+        await _memoGenerator.DidNotReceive().GenerateAsync(Arg.Any<string>(), Arg.Any<string>());
+        await _memos.DidNotReceive().CreateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<long?>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_ReturnsFalse_WhenChunksNotAllTranscribed()
+    {
+        _chunks.GetTranscriptionStatusAsync("session-1").Returns((2, false));
+
+        _sessions.GetByIdAsync("session-1").Returns(new Session
+        {
+            Id = "session-1", UserId = "user-1", Status = "processing",
+            OutputMode = "full", AudioSource = "microphone",
+            StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
+        });
+
+        var result = await _sut.ProcessAsync("session-1");
+
+        result.Should().BeFalse();
+        await _memoGenerator.DidNotReceive().GenerateAsync(Arg.Any<string>(), Arg.Any<string>());
     }
 }

@@ -76,5 +76,40 @@ public class SessionRepositoryTests : IDisposable
         updated!.Status.Should().Be("processing");
     }
 
+    [Fact]
+    public async Task IsFinalizedAsync_ReturnsFalse_WhenNotFinalized()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone");
+
+        var result = await _sut.IsFinalizedAsync(session.Id);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task IsFinalizedAsync_ReturnsTrue_WhenFinalized()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone");
+        await _sut.SetEndedAtAsync(session.Id);
+
+        var result = await _sut.IsFinalizedAsync(session.Id);
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UpdateOutputModeAsync_ChangesOutputMode()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone");
+
+        await _sut.UpdateOutputModeAsync(session.Id, "product-planning");
+
+        var updated = await _sut.GetByIdAsync(session.Id);
+        updated!.OutputMode.Should().Be("product-planning");
+    }
+
     public void Dispose() => _db.Dispose();
 }

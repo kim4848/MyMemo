@@ -51,6 +51,7 @@ builder.Services.Configure<AzureOpenAIOptions>(builder.Configuration.GetSection(
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
 builder.Services.AddSingleton<IQueueService, QueueService>();
+builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
 
 var app = builder.Build();
 

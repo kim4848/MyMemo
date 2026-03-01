@@ -10,6 +10,7 @@ public sealed class SessionRepository(IDbConnectionFactory db) : ISessionReposit
         """
         id AS Id, user_id AS UserId, title AS Title, status AS Status,
         output_mode AS OutputMode, audio_source AS AudioSource,
+        memo_queued AS MemoQueued,
         started_at AS StartedAt, ended_at AS EndedAt,
         created_at AS CreatedAt, updated_at AS UpdatedAt
         """;
@@ -68,5 +69,33 @@ public sealed class SessionRepository(IDbConnectionFactory db) : ISessionReposit
         await conn.ExecuteAsync(
             "UPDATE sessions SET ended_at = @now, updated_at = @now WHERE id = @id",
             new { id, now });
+    }
+
+    public async Task<bool> IsFinalizedAsync(string id)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var count = await conn.ExecuteScalarAsync<int>(
+            "SELECT COUNT(*) FROM sessions WHERE id = @id AND ended_at IS NOT NULL",
+            new { id });
+        return count > 0;
+    }
+
+    public async Task UpdateOutputModeAsync(string id, string outputMode)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        await conn.ExecuteAsync(
+            "UPDATE sessions SET output_mode = @outputMode, updated_at = @now WHERE id = @id",
+            new { id, outputMode, now });
+    }
+
+    public async Task<bool> TrySetMemoQueuedAsync(string id)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        var rowsAffected = await conn.ExecuteAsync(
+            "UPDATE sessions SET memo_queued = 1, updated_at = @now WHERE id = @id AND memo_queued = 0",
+            new { id, now });
+        return rowsAffected > 0;
     }
 }

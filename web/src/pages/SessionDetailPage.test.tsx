@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 
@@ -9,6 +10,7 @@ vi.mock('../api/client', () => ({
     },
     memos: {
       get: vi.fn(),
+      regenerate: vi.fn(),
     },
   },
   ApiError: class ApiError extends Error {
@@ -53,6 +55,7 @@ const mockDetail: SessionDetail = {
       updatedAt: '2026-01-15T10:05:00',
     },
   ],
+  transcriptionDurations: { c1: 2400 },
 };
 
 const mockMemo: Memo = {
@@ -63,6 +66,7 @@ const mockMemo: Memo = {
   modelUsed: 'gpt-4.1-nano',
   promptTokens: 1000,
   completionTokens: 500,
+  generationDurationMs: 3200,
   createdAt: '2026-01-15T11:01:00',
 };
 
@@ -112,17 +116,79 @@ describe('SessionDetailPage', () => {
     });
   });
 
-  test('shows processing message when memo not ready', async () => {
+  test('shows transcribing message when chunks not yet transcribed', async () => {
     vi.mocked(api.sessions.get).mockResolvedValue({
       ...mockDetail,
       session: { ...mockDetail.session, status: 'processing' },
+      chunks: [
+        { ...mockDetail.chunks[0], status: 'transcribing' },
+        { ...mockDetail.chunks[0], id: 'c2', chunkIndex: 1, status: 'uploaded' },
+      ],
     });
     vi.mocked(api.memos.get).mockRejectedValue({ status: 404 });
 
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByText(/generating memo/i)).toBeInTheDocument();
+      expect(screen.getByText(/transcribing audio/i)).toBeInTheDocument();
     });
+  });
+
+  test('shows generating memo message when all chunks transcribed', async () => {
+    vi.mocked(api.sessions.get).mockResolvedValue({
+      ...mockDetail,
+      session: { ...mockDetail.session, status: 'processing' },
+      chunks: [
+        { ...mockDetail.chunks[0], status: 'transcribed' },
+      ],
+    });
+    vi.mocked(api.memos.get).mockRejectedValue({ status: 404 });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/generating memo/i).length).toBeGreaterThan(0);
+    });
+  });
+
+  test('shows output mode dropdown when memo is available', async () => {
+    vi.mocked(api.sessions.get).mockResolvedValue(mockDetail);
+    vi.mocked(api.memos.get).mockResolvedValue(mockMemo);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/output mode/i)).toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /regenerate/i })).toBeInTheDocument();
+  });
+
+  test('regenerate button is disabled when mode matches current memo', async () => {
+    vi.mocked(api.sessions.get).mockResolvedValue(mockDetail);
+    vi.mocked(api.memos.get).mockResolvedValue(mockMemo);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /regenerate/i })).toBeDisabled();
+    });
+  });
+
+  test('regenerate calls API when mode is changed', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.sessions.get).mockResolvedValue(mockDetail);
+    vi.mocked(api.memos.get).mockResolvedValue(mockMemo);
+    vi.mocked(api.memos.regenerate).mockResolvedValue(undefined);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByLabelText(/output mode/i)).toBeInTheDocument();
+    });
+
+    await user.selectOptions(screen.getByLabelText(/output mode/i), 'summary');
+    await user.click(screen.getByRole('button', { name: /regenerate/i }));
+
+    expect(api.memos.regenerate).toHaveBeenCalledWith('sess1', 'summary');
   });
 });

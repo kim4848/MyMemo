@@ -1,4 +1,10 @@
-export type OutputMode = 'full' | 'summary';
+export type OutputMode = 'full' | 'summary' | 'product-planning';
+
+export const outputModeLabels: Record<OutputMode, string> = {
+  full: 'Full Transcript',
+  summary: 'Summary',
+  'product-planning': 'Product Planning',
+};
 export type AudioSource = 'microphone' | 'system' | 'both';
 export type SessionStatus = 'recording' | 'processing' | 'completed' | 'failed';
 export type ChunkStatus = 'uploaded' | 'queued' | 'transcribing' | 'transcribed' | 'failed';
@@ -31,6 +37,7 @@ export interface Chunk {
 export interface SessionDetail {
   session: Session;
   chunks: Chunk[];
+  transcriptionDurations: Record<string, number>;
 }
 
 export interface Memo {
@@ -41,6 +48,7 @@ export interface Memo {
   modelUsed: string;
   promptTokens: number | null;
   completionTokens: number | null;
+  generationDurationMs: number | null;
   createdAt: string;
 }
 

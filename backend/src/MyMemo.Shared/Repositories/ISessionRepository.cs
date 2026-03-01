@@ -10,4 +10,7 @@ public interface ISessionRepository
     Task DeleteAsync(string id);
     Task UpdateStatusAsync(string id, string status);
     Task SetEndedAtAsync(string id);
+    Task<bool> IsFinalizedAsync(string id);
+    Task UpdateOutputModeAsync(string id, string outputMode);
+    Task<bool> TrySetMemoQueuedAsync(string id);
 }

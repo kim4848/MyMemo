@@ -96,17 +96,42 @@ export default function RecorderPage() {
             </button>
           )}
 
-          {status === 'stopped' && (
-            <button
-              onClick={handleFinalize}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-accent px-4 py-4 font-medium text-white transition-colors hover:bg-accent-hover"
-            >
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-              </svg>
-              Finalize &amp; Generate Memo
-            </button>
-          )}
+          {status === 'stopped' && (() => {
+            const hasIncomplete = chunks.some(
+              (c) => c.status === 'pending' || c.status === 'uploading',
+            );
+            const hasFailed = chunks.some((c) => c.status === 'failed');
+            const canFinalize = chunks.length > 0 && !hasIncomplete && !hasFailed;
+
+            return (
+              <>
+                <button
+                  onClick={handleFinalize}
+                  disabled={!canFinalize}
+                  className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-4 font-medium text-white transition-colors ${
+                    canFinalize
+                      ? 'bg-accent hover:bg-accent-hover'
+                      : 'cursor-not-allowed bg-gray-600 opacity-50'
+                  }`}
+                >
+                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                  </svg>
+                  Finalize &amp; Generate Memo
+                </button>
+                {hasIncomplete && (
+                  <p className="text-center text-sm text-yellow-400">
+                    Waiting for chunks to finish uploading...
+                  </p>
+                )}
+                {hasFailed && (
+                  <p className="text-center text-sm text-red-400">
+                    Some chunks failed to upload. Please retry or start a new recording.
+                  </p>
+                )}
+              </>
+            );
+          })()}
 
           <ChunkStatusList chunks={chunks} />
         </div>

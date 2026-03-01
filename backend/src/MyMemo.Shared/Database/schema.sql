@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     status       TEXT NOT NULL DEFAULT 'recording',
     output_mode  TEXT NOT NULL DEFAULT 'full',
     audio_source TEXT NOT NULL DEFAULT 'microphone',
+    memo_queued  INTEGER NOT NULL DEFAULT 0,
     started_at   TEXT NOT NULL DEFAULT (datetime('now')),
     ended_at     TEXT,
     created_at   TEXT NOT NULL DEFAULT (datetime('now')),
@@ -39,21 +40,23 @@ CREATE INDEX IF NOT EXISTS idx_chunks_session ON chunks(session_id);
 
 CREATE TABLE IF NOT EXISTS transcriptions (
     id              TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-    chunk_id        TEXT NOT NULL UNIQUE REFERENCES chunks(id) ON DELETE CASCADE,
-    raw_text        TEXT NOT NULL,
-    language        TEXT DEFAULT 'da',
-    confidence      REAL,
-    word_timestamps TEXT,
-    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+    chunk_id                  TEXT NOT NULL UNIQUE REFERENCES chunks(id) ON DELETE CASCADE,
+    raw_text                  TEXT NOT NULL,
+    language                  TEXT DEFAULT 'da',
+    confidence                REAL,
+    word_timestamps           TEXT,
+    transcription_duration_ms INTEGER,
+    created_at                TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE TABLE IF NOT EXISTS memos (
     id                TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
-    session_id        TEXT NOT NULL UNIQUE REFERENCES sessions(id) ON DELETE CASCADE,
-    output_mode       TEXT NOT NULL,
-    content           TEXT NOT NULL,
-    model_used        TEXT NOT NULL,
-    prompt_tokens     INTEGER,
-    completion_tokens INTEGER,
-    created_at        TEXT NOT NULL DEFAULT (datetime('now'))
+    session_id            TEXT NOT NULL UNIQUE REFERENCES sessions(id) ON DELETE CASCADE,
+    output_mode           TEXT NOT NULL,
+    content               TEXT NOT NULL,
+    model_used            TEXT NOT NULL,
+    prompt_tokens         INTEGER,
+    completion_tokens     INTEGER,
+    generation_duration_ms INTEGER,
+    created_at            TEXT NOT NULL DEFAULT (datetime('now'))
 );

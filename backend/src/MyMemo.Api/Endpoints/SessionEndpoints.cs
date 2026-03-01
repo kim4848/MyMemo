@@ -50,6 +50,7 @@ public static class SessionEndpoints
         string id,
         ISessionRepository sessions,
         IChunkRepository chunks,
+        ITranscriptionRepository transcriptions,
         IUserRepository users,
         ClaimsPrincipal principal)
     {
@@ -63,7 +64,12 @@ public static class SessionEndpoints
             return Results.NotFound();
 
         var sessionChunks = await chunks.ListBySessionAsync(id);
-        return Results.Ok(new { session, chunks = sessionChunks });
+        var sessionTranscriptions = await transcriptions.ListBySessionAsync(id);
+        var transcriptionDurations = sessionTranscriptions
+            .Where(t => t.TranscriptionDurationMs.HasValue)
+            .ToDictionary(t => t.ChunkId, t => t.TranscriptionDurationMs!.Value);
+
+        return Results.Ok(new { session, chunks = sessionChunks, transcriptionDurations });
     }
 
     private static async Task<IResult> DeleteSession(
