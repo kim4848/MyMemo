@@ -476,6 +476,65 @@ Backend:   GitHub → Azure Container Registry → Container Apps
 }
 ```
 
+### Scale-to-Zero Arkitektur (KEDA)
+
+Alle Container Apps kører på Consumption-plan med **min 0 replicas**, så der ikke betales for idle compute.
+
+```
+                    ┌───────────────────────────────────┐
+                    │  KEDA Auto-scaler                 │
+                    │                                   │
+  HTTP traffic ───▶ │  API:    0→2 replicas (HTTP rule) │
+                    │          concurrentRequests: 50    │
+                    │                                   │
+  Queue messages ──▶│  Worker: 0→4 replicas (Queue rule)│
+                    │          queueLength: 1            │
+                    │          Queues:                   │
+                    │           • transcription-jobs     │
+                    │           • memo-generation        │
+                    └───────────────────────────────────┘
+```
+
+**Idle-tilstand:** Ingen replicas kører → $0/måned for compute.
+
+**Aktivering:**
+- API: Første HTTP-request trigger cold start (~2-5 sek)
+- Worker: KEDA poller Storage Queue hvert 30. sekund. Når besked detekteres, startes container (~5-10 sek cold start)
+
+**Scale-down:** Efter 300 sekunder (default cooldown) uden aktivitet scales ned til 0.
+
+**Docker images:** Alpine-baserede (`aspnet:8.0-alpine`) for ~50% mindre image og hurtigere cold start.
+
+### Infrastructure as Code (Bicep)
+
+Al Azure-infrastruktur er defineret som Bicep-templates i `infra/`:
+
+```
+infra/
+  main.bicep              ← Orchestrator (deployer alle moduler)
+  main.bicepparam         ← Parameter-fil (dev/prod)
+  modules/
+    log-analytics.bicep       Log Analytics Workspace
+    container-registry.bicep  Azure Container Registry (Basic)
+    storage.bicep             Blob Storage + Storage Queues
+    openai.bicep              Azure OpenAI (Whisper + GPT-4.1 Nano)
+    container-apps-env.bicep  Container Apps Environment
+    container-app-api.bicep   API Container App (scale 0→2)
+    container-app-worker.bicep Worker Container App (scale 0→4, KEDA)
+```
+
+**Deploy:**
+```bash
+az group create -n mymemo-rg -l westeurope
+az deployment group create \
+  --resource-group mymemo-rg \
+  --template-file infra/main.bicep \
+  --parameters infra/main.bicepparam \
+  --parameters tursoUrl='<url>' tursoAuthToken='<token>' clerkSecretKey='<key>'
+```
+
+**Ressourcer IKKE i Bicep** (eksterne services): Turso, Clerk, Netlify.
+
 -----
 
 ## 9. Omkostningsestimat
@@ -500,6 +559,22 @@ Backend:   GitHub → Azure Container Registry → Container Apps
 | Netlify (Pro, hvis nødvendigt) | $19          |
 | Auth (Clerk, <5 users)         | $0           |
 | **Total/måned**                | **~$50–$80** |
+
+### Idle-omkostning (ingen brug)
+
+|                                | Pris         |
+|--------------------------------|--------------|
+| Container Apps (0 replicas)    | $0           |
+| Storage Account (tomt)         | ~$0.01       |
+| Azure OpenAI (ingen kald)      | $0           |
+| Container Registry (Basic)     | ~$5          |
+| Log Analytics (ingen data)     | $0           |
+| Turso (Free/Starter)           | $0           |
+| Netlify (Free tier)            | $0           |
+| Clerk (<5 users)               | $0           |
+| **Total idle/måned**           | **~$5**      |
+
+> Scale-to-zero via KEDA sikrer at compute-omkostninger er $0 når systemet ikke bruges. Den eneste faste omkostning er Container Registry (Basic: ~$5/måned).
 
 -----
 

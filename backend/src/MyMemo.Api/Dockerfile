@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 WORKDIR /src
 COPY ["Directory.Build.props", "./"]
 COPY ["global.json", "./"]
@@ -8,7 +8,7 @@ RUN dotnet restore "src/MyMemo.Api/MyMemo.Api.csproj"
 COPY src/ src/
 RUN dotnet publish "src/MyMemo.Api/MyMemo.Api.csproj" -c Release -o /app/publish
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/aspnet:8.0-alpine
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 8080
