@@ -85,7 +85,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
       containers: [
         {
           name: 'api'
-          image: '${registryLoginServer}/mymemo-api:${imageTag}'
+          image: imageTag == 'latest' ? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest' : '${registryLoginServer}/mymemo-api:${imageTag}'
           resources: {
             cpu: json('0.25')
             memory: '0.5Gi'

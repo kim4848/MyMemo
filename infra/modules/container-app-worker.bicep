@@ -79,7 +79,7 @@ resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
       containers: [
         {
           name: 'worker'
-          image: '${registryLoginServer}/mymemo-worker:${imageTag}'
+          image: imageTag == 'latest' ? 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest' : '${registryLoginServer}/mymemo-worker:${imageTag}'
           resources: {
             cpu: json('0.5')
             memory: '1Gi'
