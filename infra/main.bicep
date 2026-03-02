@@ -39,7 +39,7 @@ module containerRegistry 'modules/container-registry.bicep' = {
   name: 'container-registry'
   params: {
     location: location
-    registryName: replace('${environmentName}cr', '-', '')
+    registryName: toLower(replace('${environmentName}cr', '-', ''))
   }
 }
 
@@ -48,7 +48,7 @@ module storage 'modules/storage.bicep' = {
   name: 'storage'
   params: {
     location: location
-    storageAccountName: replace('${environmentName}st', '-', '')
+    storageAccountName: toLower(replace('${environmentName}st', '-', ''))
   }
 }
 
