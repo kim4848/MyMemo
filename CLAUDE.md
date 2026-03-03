@@ -48,6 +48,19 @@ Project is in initialization phase — no runnable code yet. Commands will be ad
 - `backend/README.md`
 - `desktop/README.md`
 
+## Database & Migrations
+
+Backend uses **Dapper** (micro-ORM with raw SQL) — NOT Entity Framework Core. There is no auto-generated migration tooling.
+
+When adding or changing a model property, you MUST update all three locations:
+
+1. **Model class** — `backend/src/MyMemo.Shared/Models/{Entity}.cs`
+2. **Schema SQL** — `backend/src/MyMemo.Shared/Database/schema.sql` (the `CREATE TABLE` statement)
+3. **DatabaseInitializer** — `backend/src/MyMemo.Shared/Database/DatabaseInitializer.cs` (add an `ALTER TABLE` migration for existing databases, wrapped in try-catch to skip if column already exists)
+4. **Repository SQL** — update any Dapper queries in `backend/src/MyMemo.Shared/Repositories/` that need the new column
+
+The `DatabaseInitializer` runs on startup in both API and Worker. It creates tables from `schema.sql` and applies incremental `ALTER TABLE` migrations.
+
 ## Key References
 
 - `docs/technical-specification.md` — full spec (Danish): API endpoints, data model, LLM prompts, infra, cost estimates, phased rollout
