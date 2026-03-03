@@ -55,5 +55,5 @@ resource gptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10
 @description('Endpoint URL for the Azure OpenAI account')
 output endpoint string = openAiAccount.properties.endpoint
 
-@description('Primary API key for the Azure OpenAI account')
-output key string = openAiAccount.listKeys().key1
+@description('Name of the Azure OpenAI account')
+output accountName string = openAiAccount.name

@@ -81,7 +81,7 @@ module apiApp 'modules/container-app-api.bicep' = {
     registryLoginServer: containerRegistry.outputs.loginServer
     registryName: containerRegistry.outputs.name
     imageTag: apiImageTag
-    storageConnectionString: storage.outputs.connectionString
+    storageAccountName: storage.outputs.accountName
     tursoUrl: tursoUrl
     tursoAuthToken: tursoAuthToken
     clerkSecretKey: clerkSecretKey
@@ -99,11 +99,11 @@ module workerApp 'modules/container-app-worker.bicep' = {
     registryLoginServer: containerRegistry.outputs.loginServer
     registryName: containerRegistry.outputs.name
     imageTag: workerImageTag
-    storageConnectionString: storage.outputs.connectionString
+    storageAccountName: storage.outputs.accountName
     tursoUrl: tursoUrl
     tursoAuthToken: tursoAuthToken
     openAiEndpoint: openAi.outputs.endpoint
-    openAiKey: openAi.outputs.key
+    openAiAccountName: openAi.outputs.accountName
   }
 }
 

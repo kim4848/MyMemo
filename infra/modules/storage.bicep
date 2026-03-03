@@ -76,8 +76,5 @@ resource memoQueue 'Microsoft.Storage/storageAccounts/queueServices/queues@2023-
   name: 'memo-generation'
 }
 
-@description('Connection string for the Storage Account')
-output connectionString string = 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
-
 @description('Name of the Storage Account')
 output accountName string = storageAccount.name

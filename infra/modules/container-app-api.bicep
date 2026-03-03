@@ -16,9 +16,8 @@ param registryName string
 @description('Docker image tag for the API')
 param imageTag string = 'latest'
 
-@description('Azure Storage connection string')
-@secure()
-param storageConnectionString string
+@description('Azure Storage Account name')
+param storageAccountName string
 
 @description('Turso database URL')
 @secure()
@@ -37,6 +36,10 @@ param clerkPublishableKey string
 
 resource registry 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' existing = {
   name: registryName
+}
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
+  name: storageAccountName
 }
 
 resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
@@ -65,7 +68,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
         }
         {
           name: 'storage-connection-string'
-          value: storageConnectionString
+          value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
         }
         {
           name: 'turso-url'
