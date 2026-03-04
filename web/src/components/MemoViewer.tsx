@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import type { Memo, Session } from '../types';
 import { outputModeLabels } from '../types';
+import { useMicrosoftAuth } from '../hooks/useMicrosoftAuth';
+import OneNotePickerModal from './OneNotePickerModal';
 
 interface Props {
   memo: Memo | null;
@@ -13,6 +16,8 @@ function formatDuration(ms: number): string {
 }
 
 export default function MemoViewer({ memo, isProcessing, allTranscribed, session }: Props) {
+  const { isAuthenticated, login } = useMicrosoftAuth();
+  const [showPickerModal, setShowPickerModal] = useState(false);
   if (isProcessing && !memo) {
     return (
       <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-5">
@@ -37,7 +42,23 @@ export default function MemoViewer({ memo, isProcessing, allTranscribed, session
         <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
           {outputModeLabels[memo.outputMode]}
         </span>
+        <button
+          onClick={async () => {
+            if (!isAuthenticated) await login();
+            setShowPickerModal(true);
+          }}
+          className="ml-auto rounded-lg border border-navy-600 bg-navy-700 px-3 py-1 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent"
+        >
+          Send to OneNote
+        </button>
       </div>
+      {showPickerModal && session && (
+        <OneNotePickerModal
+          memo={memo}
+          session={session}
+          onClose={() => setShowPickerModal(false)}
+        />
+      )}
       <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
         <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">{memo.content}</div>
       </div>
