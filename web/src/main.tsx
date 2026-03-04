@@ -12,12 +12,14 @@ if (!clerkPubKey) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY env variable');
 }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <MsalProvider instance={msalInstance}>
-      <ClerkProvider publishableKey={clerkPubKey}>
-        <App />
-      </ClerkProvider>
-    </MsalProvider>
-  </StrictMode>,
-);
+msalInstance.initialize().then(() => {
+  createRoot(document.getElementById('root')!).render(
+    <StrictMode>
+      <MsalProvider instance={msalInstance}>
+        <ClerkProvider publishableKey={clerkPubKey}>
+          <App />
+        </ClerkProvider>
+      </MsalProvider>
+    </StrictMode>,
+  );
+});
