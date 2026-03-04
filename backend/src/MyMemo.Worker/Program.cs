@@ -1,15 +1,23 @@
 using Microsoft.Extensions.Options;
 using MyMemo.Shared.Database;
+using MyMemo.Shared.Database.Turso;
 using MyMemo.Shared.Repositories;
 using MyMemo.Shared.Services;
 using MyMemo.Worker.Workers;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Database
-var dbConnectionString = builder.Configuration.GetConnectionString("Database")
-    ?? "Data Source=mymemo.db";
-builder.Services.AddSingleton<IDbConnectionFactory>(new SqliteConnectionFactory(dbConnectionString));
+// Database — use Turso in production, SQLite locally
+var tursoUrl   = builder.Configuration["Turso:Url"];
+var tursoToken = builder.Configuration["Turso:AuthToken"];
+
+if (!string.IsNullOrWhiteSpace(tursoUrl) && string.IsNullOrWhiteSpace(tursoToken))
+    throw new InvalidOperationException("Turso:AuthToken is required when Turso:Url is set.");
+
+IDbConnectionFactory dbFactory = !string.IsNullOrWhiteSpace(tursoUrl)
+    ? new TursoConnectionFactory(tursoUrl, tursoToken!)
+    : new SqliteConnectionFactory(builder.Configuration.GetConnectionString("Database") ?? "Data Source=mymemo.db");
+builder.Services.AddSingleton(dbFactory);
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
@@ -35,8 +43,7 @@ builder.Services.AddHostedService<MemoGenerationWorker>();
 var host = builder.Build();
 
 // Initialize database
-var dbFactory = host.Services.GetRequiredService<IDbConnectionFactory>();
-await DatabaseInitializer.Initialize(dbFactory);
+await DatabaseInitializer.Initialize(host.Services.GetRequiredService<IDbConnectionFactory>());
 
 // Log configured model names
 var openAiOptions = host.Services.GetRequiredService<IOptions<AzureOpenAIOptions>>().Value;

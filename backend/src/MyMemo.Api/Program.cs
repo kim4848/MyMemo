@@ -1,6 +1,7 @@
 using MyMemo.Api.Auth;
 using MyMemo.Api.Endpoints;
 using MyMemo.Shared.Database;
+using MyMemo.Shared.Database.Turso;
 using MyMemo.Shared.Repositories;
 using MyMemo.Shared.Services;
 
@@ -24,17 +25,28 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddClerkAuth(builder.Configuration);
 
-// Database
-var dbConnectionString = builder.Configuration.GetConnectionString("Database")
-    ?? "Data Source=mymemo.db";
-builder.Services.AddSingleton<IDbConnectionFactory>(new SqliteConnectionFactory(dbConnectionString));
+// Database — use Turso in production, SQLite locally
+var tursoUrl   = builder.Configuration["Turso:Url"];
+var tursoToken = builder.Configuration["Turso:AuthToken"];
 
-// Keep a connection alive for in-memory databases (shared cache requires at least one open connection)
+if (!string.IsNullOrWhiteSpace(tursoUrl) && string.IsNullOrWhiteSpace(tursoToken))
+    throw new InvalidOperationException("Turso:AuthToken is required when Turso:Url is set.");
+
+IDbConnectionFactory dbFactory = !string.IsNullOrWhiteSpace(tursoUrl)
+    ? new TursoConnectionFactory(tursoUrl, tursoToken!)
+    : new SqliteConnectionFactory(builder.Configuration.GetConnectionString("Database") ?? "Data Source=mymemo.db");
+builder.Services.AddSingleton(dbFactory);
+
+// Keep a connection alive for in-memory SQLite (shared cache requires one open connection)
 Microsoft.Data.Sqlite.SqliteConnection? keepAliveConnection = null;
-if (dbConnectionString.Contains("Mode=Memory", StringComparison.OrdinalIgnoreCase))
+if (string.IsNullOrWhiteSpace(tursoUrl))
 {
-    keepAliveConnection = new Microsoft.Data.Sqlite.SqliteConnection(dbConnectionString);
-    keepAliveConnection.Open();
+    var localCs = builder.Configuration.GetConnectionString("Database") ?? "Data Source=mymemo.db";
+    if (localCs.Contains("Mode=Memory", StringComparison.OrdinalIgnoreCase))
+    {
+        keepAliveConnection = new Microsoft.Data.Sqlite.SqliteConnection(localCs);
+        keepAliveConnection.Open();
+    }
 }
 
 // Repositories
@@ -56,8 +68,7 @@ builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
 var app = builder.Build();
 
 // Initialize database
-var dbFactory = app.Services.GetRequiredService<IDbConnectionFactory>();
-await DatabaseInitializer.Initialize(dbFactory);
+await DatabaseInitializer.Initialize(app.Services.GetRequiredService<IDbConnectionFactory>());
 
 app.UseSwagger();
 app.UseSwaggerUI();
