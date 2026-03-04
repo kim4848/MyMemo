@@ -146,12 +146,12 @@ public sealed class TursoDbCommand(TursoDbConnection connection) : DbCommand
     {
         null or DBNull  => ("null", null),
         string s        => ("text", JsonValue.Create(s)),
-        bool b          => ("integer", JsonValue.Create(b ? 1 : 0)),
-        int i           => ("integer", JsonValue.Create((long)i)),
-        long l          => ("integer", JsonValue.Create(l)),
-        float f         => ("real", JsonValue.Create((double)f)),
-        double d        => ("real", JsonValue.Create(d)),
-        decimal dec     => ("real", JsonValue.Create((double)dec)),
+        bool b          => ("integer", JsonValue.Create(b ? "1" : "0")),
+        int i           => ("integer", JsonValue.Create(i.ToString())),
+        long l          => ("integer", JsonValue.Create(l.ToString())),
+        float f         => ("real", JsonValue.Create(((double)f).ToString(System.Globalization.CultureInfo.InvariantCulture))),
+        double d        => ("real", JsonValue.Create(d.ToString(System.Globalization.CultureInfo.InvariantCulture))),
+        decimal dec     => ("real", JsonValue.Create(((double)dec).ToString(System.Globalization.CultureInfo.InvariantCulture))),
         _               => ("text", JsonValue.Create(v.ToString()))
     };
 
