@@ -1,8 +1,8 @@
-using Microsoft.Data.Sqlite;
+using System.Data.Common;
 
 namespace MyMemo.Shared.Database;
 
 public interface IDbConnectionFactory
 {
-    Task<SqliteConnection> CreateConnectionAsync();
+    Task<DbConnection> CreateConnectionAsync();
 }
