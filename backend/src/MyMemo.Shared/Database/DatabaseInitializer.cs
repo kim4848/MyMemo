@@ -7,8 +7,8 @@ public static class DatabaseInitializer
     public static async Task Initialize(IDbConnectionFactory factory)
     {
         using var connection = await factory.CreateConnectionAsync();
-        await connection.ExecuteAsync("PRAGMA journal_mode=WAL;");
-        await connection.ExecuteAsync("PRAGMA foreign_keys=ON;");
+        try { await connection.ExecuteAsync("PRAGMA journal_mode=WAL;"); } catch { /* not supported on Turso */ }
+        try { await connection.ExecuteAsync("PRAGMA foreign_keys=ON;"); } catch { /* not supported on Turso */ }
 
         var schema = GetEmbeddedSchema();
         await connection.ExecuteAsync(schema);
