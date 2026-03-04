@@ -105,9 +105,9 @@ public sealed class TursoDbCommand(TursoDbConnection connection) : DbCommand
         using var resp = await connection.HttpClient.SendAsync(req, ct);
         if (!resp.IsSuccessStatusCode)
         {
-            var body = await resp.Content.ReadAsStringAsync(ct);
+            var errorBody = await resp.Content.ReadAsStringAsync(ct);
             throw new InvalidOperationException(
-                $"Turso HTTP {(int)resp.StatusCode}: {body}");
+                $"Turso HTTP {(int)resp.StatusCode}: {errorBody}");
         }
 
         using var doc = await JsonDocument.ParseAsync(
