@@ -11,7 +11,8 @@ public static class DatabaseInitializer
         try { await connection.ExecuteAsync("PRAGMA foreign_keys=ON;"); } catch { /* not supported on Turso */ }
 
         var schema = GetEmbeddedSchema();
-        await connection.ExecuteAsync(schema);
+        foreach (var stmt in SplitStatements(schema))
+            await connection.ExecuteAsync(stmt);
 
         // Idempotent migrations: ALTER TABLE throws if column already exists
         string[] migrations =
@@ -26,6 +27,10 @@ public static class DatabaseInitializer
             catch { /* Column already exists — ignore */ }
         }
     }
+
+    private static IEnumerable<string> SplitStatements(string sql) =>
+        sql.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+           .Where(s => s.Length > 0);
 
     private static string GetEmbeddedSchema()
     {
