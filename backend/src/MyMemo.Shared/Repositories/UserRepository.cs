@@ -32,9 +32,9 @@ public sealed class UserRepository(IDbConnectionFactory db) : IUserRepository
             var id = Guid.NewGuid().ToString("N");
             var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
             await conn.ExecuteAsync(
-                "INSERT INTO users (id, email, name, clerk_id, created_at, updated_at) VALUES (@id, @email, @name, @clerkId, @now, @now)",
+                "INSERT OR IGNORE INTO users (id, email, name, clerk_id, created_at, updated_at) VALUES (@id, @email, @name, @clerkId, @now, @now)",
                 new { id, email, name, clerkId, now });
-            return new User { Id = id, Email = email, Name = name, ClerkId = clerkId, CreatedAt = now, UpdatedAt = now };
+            return await conn.QuerySingleAsync<User>($"{selectSql} WHERE clerk_id = @clerkId", new { clerkId });
         }
     }
 
