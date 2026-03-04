@@ -8,7 +8,7 @@ export function useMicrosoftAuth() {
   const isAuthenticated = accounts.length > 0;
 
   async function login() {
-    await instance.loginPopup({ scopes: msalScopes });
+    await instance.loginPopup({ scopes: msalScopes, prompt: 'select_account' });
   }
 
   async function logout() {
