@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+html, body, #root {
+  min-height: 100dvh;
+  background-color: var(--color-navy-950);
+}
+
 @theme {
   --color-navy-950: #060d19;
   --color-navy-900: #0b1628;
