@@ -27,6 +27,7 @@ export default function SessionDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMode, setSelectedMode] = useState<OutputMode>('full');
+  const [editContext, setEditContext] = useState('');
   const [regenerating, setRegenerating] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
@@ -38,6 +39,7 @@ export default function SessionDetailPage() {
         const data = await api.sessions.get(id!);
         setDetail(data);
         setSelectedMode(data.session.outputMode);
+        setEditContext(data.session.context ?? '');
 
         try {
           const m = await api.memos.get(id!);
@@ -121,6 +123,13 @@ export default function SessionDetailPage() {
         {outputModeLabels[session.outputMode]} &middot; {session.audioSource}
       </div>
 
+      {session.context && (
+        <div className="rounded-xl border border-navy-700 bg-navy-800 p-4">
+          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Kontekst</h2>
+          <p className="text-sm text-gray-300 whitespace-pre-wrap">{session.context}</p>
+        </div>
+      )}
+
       {session.status === 'processing' && chunks.length > 0 && (() => {
         const transcribed = chunks.filter((c) => c.status === 'transcribed').length;
         const allTranscribed = transcribed === chunks.length;
@@ -166,36 +175,46 @@ export default function SessionDetailPage() {
       )}
 
       {(session.status === 'completed' || session.status === 'failed') && memo && (
-        <div className="flex flex-wrap items-center gap-3">
-          <select
-            aria-label="Output mode"
-            value={selectedMode}
-            onChange={(e) => setSelectedMode(e.target.value as OutputMode)}
-            className="w-full rounded-lg border border-navy-600 bg-navy-700 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-accent sm:w-auto sm:py-2"
-          >
-            {Object.entries(outputModeLabels).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-          <button
-            disabled={selectedMode === memo.outputMode || regenerating}
-            onClick={async () => {
-              if (!id) return;
-              setRegenerating(true);
-              try {
-                await api.memos.regenerate(id, selectedMode);
-                setMemo(null);
-                setDetail((prev) =>
-                  prev ? { ...prev, session: { ...prev.session, status: 'processing', outputMode: selectedMode } } : prev,
-                );
-              } finally {
-                setRegenerating(false);
-              }
-            }}
-            className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-navy-900 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            Regenerate
-          </button>
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              aria-label="Output mode"
+              value={selectedMode}
+              onChange={(e) => setSelectedMode(e.target.value as OutputMode)}
+              className="w-full rounded-lg border border-navy-600 bg-navy-700 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-accent sm:w-auto sm:py-2"
+            >
+              {Object.entries(outputModeLabels).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+            <button
+              disabled={regenerating}
+              onClick={async () => {
+                if (!id) return;
+                setRegenerating(true);
+                try {
+                  const contextToSend = editContext !== (session.context ?? '') ? editContext || undefined : undefined;
+                  await api.memos.regenerate(id, selectedMode, contextToSend);
+                  setMemo(null);
+                  setDetail((prev) =>
+                    prev ? { ...prev, session: { ...prev.session, status: 'processing', outputMode: selectedMode, context: editContext || null } } : prev,
+                  );
+                } finally {
+                  setRegenerating(false);
+                }
+              }}
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-navy-900 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Regenerate
+            </button>
+          </div>
+          <textarea
+            value={editContext}
+            onChange={(e) => setEditContext(e.target.value)}
+            placeholder="Tilf&#248;j kontekst for memo-generering (f.eks. deltagere, emne, form&#229;l)"
+            rows={2}
+            className="w-full resize-none rounded-lg border border-navy-600 bg-navy-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-accent"
+          />
         </div>
       )}
 

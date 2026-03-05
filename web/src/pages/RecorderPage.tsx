@@ -14,8 +14,10 @@ export default function RecorderPage() {
     elapsedMs,
     audioSource,
     outputMode,
+    context,
     setAudioSource,
     setOutputMode,
+    setContext,
     startRecording,
     stopRecording,
     finalize,
@@ -59,6 +61,18 @@ export default function RecorderPage() {
               outputMode={outputMode}
               onAudioSourceChange={setAudioSource}
               onOutputModeChange={setOutputMode}
+            />
+          </div>
+          <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
+            <label className="mb-2 block text-sm font-medium text-gray-400">
+              Kontekst (valgfrit)
+            </label>
+            <textarea
+              value={context}
+              onChange={(e) => setContext(e.target.value)}
+              placeholder="F.eks. møde med København, deltagere: Anne, Bjarne. Emne: teknisk overdragelse af x-produkt"
+              rows={3}
+              className="w-full resize-none rounded-lg border border-navy-600 bg-navy-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-accent"
             />
           </div>
           <button

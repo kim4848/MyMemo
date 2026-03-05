@@ -10,22 +10,22 @@ public sealed class SessionRepository(IDbConnectionFactory db) : ISessionReposit
         """
         id AS Id, user_id AS UserId, title AS Title, status AS Status,
         output_mode AS OutputMode, audio_source AS AudioSource,
-        memo_queued AS MemoQueued,
+        context AS Context, memo_queued AS MemoQueued,
         started_at AS StartedAt, ended_at AS EndedAt,
         created_at AS CreatedAt, updated_at AS UpdatedAt
         """;
 
-    public async Task<Session> CreateAsync(string userId, string outputMode, string audioSource)
+    public async Task<Session> CreateAsync(string userId, string outputMode, string audioSource, string? context = null)
     {
         using var conn = await db.CreateConnectionAsync();
         var id = Guid.NewGuid().ToString("N");
         var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
         await conn.ExecuteAsync(
             """
-            INSERT INTO sessions (id, user_id, status, output_mode, audio_source, started_at, created_at, updated_at)
-            VALUES (@id, @userId, 'recording', @outputMode, @audioSource, @now, @now, @now)
+            INSERT INTO sessions (id, user_id, status, output_mode, audio_source, context, started_at, created_at, updated_at)
+            VALUES (@id, @userId, 'recording', @outputMode, @audioSource, @context, @now, @now, @now)
             """,
-            new { id, userId, outputMode, audioSource, now });
+            new { id, userId, outputMode, audioSource, context, now });
 
         return (await GetByIdAsync(id))!;
     }
@@ -87,6 +87,15 @@ public sealed class SessionRepository(IDbConnectionFactory db) : ISessionReposit
         await conn.ExecuteAsync(
             "UPDATE sessions SET output_mode = @outputMode, updated_at = @now WHERE id = @id",
             new { id, outputMode, now });
+    }
+
+    public async Task UpdateContextAsync(string id, string? context)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        await conn.ExecuteAsync(
+            "UPDATE sessions SET context = @context, updated_at = @now WHERE id = @id",
+            new { id, context, now });
     }
 
     public async Task<bool> TrySetMemoQueuedAsync(string id)

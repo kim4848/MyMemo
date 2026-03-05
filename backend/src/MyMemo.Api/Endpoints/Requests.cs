@@ -1,3 +1,3 @@
 namespace MyMemo.Api.Endpoints;
 
-public sealed record CreateSessionRequest(string OutputMode = "full", string AudioSource = "microphone");
+public sealed record CreateSessionRequest(string OutputMode = "full", string AudioSource = "microphone", string? Context = null);

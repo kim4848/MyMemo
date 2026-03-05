@@ -28,7 +28,7 @@ public static class SessionEndpoints
         var name = principal.FindFirstValue(ClaimTypes.Name) ?? "";
         var user = await users.GetOrCreateByClerkIdAsync(clerkId, email, name);
 
-        var session = await sessions.CreateAsync(user.Id, request.OutputMode, request.AudioSource);
+        var session = await sessions.CreateAsync(user.Id, request.OutputMode, request.AudioSource, request.Context);
         return Results.Created($"/api/sessions/{session.Id}", session);
     }
 

@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     status       TEXT NOT NULL DEFAULT 'recording',
     output_mode  TEXT NOT NULL DEFAULT 'full',
     audio_source TEXT NOT NULL DEFAULT 'microphone',
+    context      TEXT,
     memo_queued  INTEGER NOT NULL DEFAULT 0,
     started_at   TEXT NOT NULL DEFAULT (datetime('now')),
     ended_at     TEXT,
