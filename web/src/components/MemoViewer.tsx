@@ -37,7 +37,7 @@ export default function MemoViewer({ memo, isProcessing, allTranscribed, session
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-lg font-semibold text-white">Memo</h2>
         <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
           {outputModeLabels[memo.outputMode]}
@@ -47,7 +47,7 @@ export default function MemoViewer({ memo, isProcessing, allTranscribed, session
             if (!isAuthenticated) await login();
             setShowPickerModal(true);
           }}
-          className="ml-auto rounded-lg border border-navy-600 bg-navy-700 px-3 py-1 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent"
+          className="ml-auto rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent sm:py-1"
         >
           Send to OneNote
         </button>
@@ -59,7 +59,7 @@ export default function MemoViewer({ memo, isProcessing, allTranscribed, session
           onClose={() => setShowPickerModal(false)}
         />
       )}
-      <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
+      <div className="rounded-xl border border-navy-700 bg-navy-800 p-4 sm:p-6">
         <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">{memo.content}</div>
       </div>
       <p className="text-xs text-gray-600">

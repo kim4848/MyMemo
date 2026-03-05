@@ -75,7 +75,7 @@ export default function RecorderPage() {
 
       {(status === 'recording' || status === 'stopped') && (
         <div className="space-y-6">
-          <div className="flex items-center justify-center rounded-xl border border-navy-700 bg-navy-800 p-8">
+          <div className="flex items-center justify-center rounded-xl border border-navy-700 bg-navy-800 p-6 sm:p-8">
             <div className="flex items-center gap-4">
               {status === 'recording' && (
                 <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
