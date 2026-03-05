@@ -6,7 +6,7 @@ namespace MyMemo.Api.Endpoints;
 
 public static class MemoEndpoints
 {
-    private static readonly HashSet<string> ValidOutputModes = ["full", "summary", "product-planning"];
+    private static readonly HashSet<string> ValidOutputModes = ["full", "summary", "product-planning", "scrum-daily"];
 
     public static void Map(IEndpointRouteBuilder app)
     {

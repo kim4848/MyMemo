@@ -74,6 +74,30 @@ public sealed class MemoGeneratorService : IMemoGeneratorService
         - Marker usikre punkter med [?]
         """;
 
+    private const string ScrumDailyModePrompt = """
+        Du er en erfaren dansk scrum master. Analysér følgende transkription fra et dagligt scrum-møde (daily standup) og lav et struktureret referat.
+
+        Format:
+        - Dato
+        - Deltagere (hvis nævnt)
+        - Per teammedlem:
+          - Igangværende opgaver (hvad arbejdes der på, status)
+          - Færdiggjorte opgaver (siden sidst)
+          - Indkomne bugs og fejl (prioritet, ansvarlig hvis nævnt)
+          - Blokeringer og udfordringer
+        - Nye opgaver og bugs (samlet overblik)
+        - Aftaler og beslutninger
+        - Action items (hvem, hvad, hvornår)
+
+        Regler:
+        - Skriv på dansk
+        - Vær kortfattet — maks 500 ord
+        - Gruppér klart per teammedlem hvor muligt
+        - Fremhæv blokeringer tydeligt
+        - Fremhæv nye bugs og indkomne fejl med prioritet hvis nævnt
+        - Marker usikre punkter med [?]
+        """;
+
     public async Task<MemoResult> GenerateAsync(string fullTranscription, string outputMode)
     {
         var chatClient = _chatClient.Value;
@@ -82,6 +106,7 @@ public sealed class MemoGeneratorService : IMemoGeneratorService
         {
             "summary" => SummaryModePrompt,
             "product-planning" => ProductPlanningModePrompt,
+            "scrum-daily" => ScrumDailyModePrompt,
             _ => FullModePrompt,
         };
 

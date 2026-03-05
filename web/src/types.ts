@@ -1,9 +1,10 @@
-export type OutputMode = 'full' | 'summary' | 'product-planning';
+export type OutputMode = 'full' | 'summary' | 'product-planning' | 'scrum-daily';
 
 export const outputModeLabels: Record<OutputMode, string> = {
   full: 'Full Transcript',
   summary: 'Summary',
   'product-planning': 'Product Planning',
+  'scrum-daily': 'Scrum Daily',
 };
 export type AudioSource = 'microphone' | 'system' | 'both';
 export type SessionStatus = 'recording' | 'processing' | 'completed' | 'failed';
