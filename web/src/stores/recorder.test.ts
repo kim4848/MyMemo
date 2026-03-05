@@ -56,6 +56,7 @@ const sessionStub = {
   status: 'recording' as const,
   outputMode: 'full' as const,
   audioSource: 'microphone' as const,
+  context: null,
   startedAt: '2026-01-01T00:00:00',
   endedAt: null,
   createdAt: '2026-01-01T00:00:00',
@@ -71,6 +72,7 @@ beforeEach(() => {
     elapsedMs: 0,
     audioSource: 'microphone',
     outputMode: 'full',
+    context: '',
   });
   vi.clearAllMocks();
   mockMediaRecorder.state = 'inactive';
@@ -113,6 +115,11 @@ describe('recorder store', () => {
     expect(useRecorderStore.getState().outputMode).toBe('summary');
   });
 
+  test('setContext updates context', () => {
+    useRecorderStore.getState().setContext('Møde med København');
+    expect(useRecorderStore.getState().context).toBe('Møde med København');
+  });
+
   test('startRecording creates session and changes status', async () => {
     vi.mocked(api.sessions.create).mockResolvedValue(sessionStub);
 
@@ -124,6 +131,19 @@ describe('recorder store', () => {
     });
     expect(useRecorderStore.getState().status).toBe('recording');
     expect(useRecorderStore.getState().sessionId).toBe('sess-1');
+  });
+
+  test('startRecording passes context when set', async () => {
+    vi.mocked(api.sessions.create).mockResolvedValue(sessionStub);
+    useRecorderStore.getState().setContext('Møde med København');
+
+    await useRecorderStore.getState().startRecording();
+
+    expect(api.sessions.create).toHaveBeenCalledWith({
+      outputMode: 'full',
+      audioSource: 'microphone',
+      context: 'Møde med København',
+    });
   });
 
   test('addChunk appends chunk to list', () => {
