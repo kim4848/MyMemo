@@ -37,6 +37,7 @@ const mockDetail: SessionDetail = {
     status: 'completed',
     outputMode: 'full',
     audioSource: 'microphone',
+    context: null,
     startedAt: '2026-01-15T10:00:00',
     endedAt: '2026-01-15T11:00:00',
     createdAt: '2026-01-15T10:00:00',
@@ -163,14 +164,14 @@ describe('SessionDetailPage', () => {
     expect(screen.getByRole('button', { name: /regenerate/i })).toBeInTheDocument();
   });
 
-  test('regenerate button is disabled when mode matches current memo', async () => {
+  test('regenerate button is enabled even when mode matches (allows context change)', async () => {
     vi.mocked(api.sessions.get).mockResolvedValue(mockDetail);
     vi.mocked(api.memos.get).mockResolvedValue(mockMemo);
 
     renderPage();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /regenerate/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /regenerate/i })).toBeEnabled();
     });
   });
 
@@ -189,6 +190,34 @@ describe('SessionDetailPage', () => {
     await user.selectOptions(screen.getByLabelText(/output mode/i), 'summary');
     await user.click(screen.getByRole('button', { name: /regenerate/i }));
 
-    expect(api.memos.regenerate).toHaveBeenCalledWith('sess1', 'summary');
+    expect(api.memos.regenerate).toHaveBeenCalledWith('sess1', 'summary', undefined);
+  });
+
+  test('shows context when session has context', async () => {
+    vi.mocked(api.sessions.get).mockResolvedValue({
+      ...mockDetail,
+      session: { ...mockDetail.session, context: 'Møde med København' },
+    });
+    vi.mocked(api.memos.get).mockResolvedValue(mockMemo);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/kontekst/i)).toBeInTheDocument();
+    });
+    // Context is displayed in the read-only section
+    const contextSection = screen.getByText(/kontekst/i).closest('div');
+    expect(contextSection).toHaveTextContent('Møde med København');
+  });
+
+  test('shows context textarea in regenerate section', async () => {
+    vi.mocked(api.sessions.get).mockResolvedValue(mockDetail);
+    vi.mocked(api.memos.get).mockResolvedValue(mockMemo);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByPlaceholderText(/kontekst/i)).toBeInTheDocument();
+    });
   });
 });

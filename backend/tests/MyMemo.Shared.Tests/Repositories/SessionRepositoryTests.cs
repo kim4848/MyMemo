@@ -111,5 +111,47 @@ public class SessionRepositoryTests : IDisposable
         updated!.OutputMode.Should().Be("product-planning");
     }
 
+    [Fact]
+    public async Task CreateAsync_StoresContext()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone", "Møde med København");
+
+        session.Context.Should().Be("Møde med København");
+    }
+
+    [Fact]
+    public async Task CreateAsync_ContextIsNullByDefault()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone");
+
+        session.Context.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateContextAsync_ChangesContext()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone");
+
+        await _sut.UpdateContextAsync(session.Id, "Ny kontekst");
+
+        var updated = await _sut.GetByIdAsync(session.Id);
+        updated!.Context.Should().Be("Ny kontekst");
+    }
+
+    [Fact]
+    public async Task UpdateContextAsync_CanClearContext()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone", "Original");
+
+        await _sut.UpdateContextAsync(session.Id, null);
+
+        var updated = await _sut.GetByIdAsync(session.Id);
+        updated!.Context.Should().BeNull();
+    }
+
     public void Dispose() => _db.Dispose();
 }

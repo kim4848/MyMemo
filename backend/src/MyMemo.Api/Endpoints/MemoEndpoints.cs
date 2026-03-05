@@ -95,11 +95,13 @@ public static class MemoEndpoints
 
         await memos.DeleteBySessionIdAsync(sessionId);
         await sessions.UpdateOutputModeAsync(sessionId, request.OutputMode);
+        if (request.Context is not null)
+            await sessions.UpdateContextAsync(sessionId, request.Context);
         await sessions.UpdateStatusAsync(sessionId, "processing");
         await queueService.SendMemoGenerationJobAsync(sessionId);
 
         return Results.Accepted($"/api/sessions/{sessionId}/memo");
     }
 
-    private sealed record RegenerateRequest(string OutputMode);
+    private sealed record RegenerateRequest(string OutputMode, string? Context = null);
 }

@@ -16,6 +16,7 @@ export interface Session {
   status: SessionStatus;
   outputMode: OutputMode;
   audioSource: AudioSource;
+  context: string | null;
   startedAt: string;
   endedAt: string | null;
   createdAt: string;
@@ -55,4 +56,5 @@ export interface Memo {
 export interface CreateSessionRequest {
   outputMode: OutputMode;
   audioSource: AudioSource;
+  context?: string;
 }

@@ -56,7 +56,7 @@ public sealed class MemoGenerationProcessor(
             var fullText = string.Join("\n\n", allTranscriptions.Select(t => t.RawText));
 
             var sw = Stopwatch.StartNew();
-            var result = await memoGenerator.GenerateAsync(fullText, session.OutputMode);
+            var result = await memoGenerator.GenerateAsync(fullText, session.OutputMode, session.Context);
             sw.Stop();
 
             await memos.CreateAsync(sessionId, session.OutputMode, result.Content, result.ModelUsed, result.PromptTokens, result.CompletionTokens, sw.ElapsedMilliseconds);

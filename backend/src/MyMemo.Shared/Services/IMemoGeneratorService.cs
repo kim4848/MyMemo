@@ -4,5 +4,5 @@ public sealed record MemoResult(string Content, string ModelUsed, int PromptToke
 
 public interface IMemoGeneratorService
 {
-    Task<MemoResult> GenerateAsync(string fullTranscription, string outputMode);
+    Task<MemoResult> GenerateAsync(string fullTranscription, string outputMode, string? context = null);
 }

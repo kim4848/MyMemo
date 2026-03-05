@@ -74,7 +74,7 @@ public sealed class MemoGeneratorService : IMemoGeneratorService
         - Marker usikre punkter med [?]
         """;
 
-    public async Task<MemoResult> GenerateAsync(string fullTranscription, string outputMode)
+    public async Task<MemoResult> GenerateAsync(string fullTranscription, string outputMode, string? context = null)
     {
         var chatClient = _chatClient.Value;
 
@@ -84,6 +84,11 @@ public sealed class MemoGeneratorService : IMemoGeneratorService
             "product-planning" => ProductPlanningModePrompt,
             _ => FullModePrompt,
         };
+
+        if (!string.IsNullOrWhiteSpace(context))
+        {
+            systemPrompt += $"\n\nKontekst for denne session:\n{context}";
+        }
 
         ChatMessage[] messages =
         [

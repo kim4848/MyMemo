@@ -89,11 +89,11 @@ export const api = {
       }),
     get: (sessionId: string) =>
       request<Memo>(`/api/sessions/${sessionId}/memo`),
-    regenerate: (sessionId: string, outputMode: OutputMode) =>
+    regenerate: (sessionId: string, outputMode: OutputMode, context?: string) =>
       request<void>(`/api/sessions/${sessionId}/regenerate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ outputMode }),
+        body: JSON.stringify({ outputMode, context }),
         noContent: true,
       }),
   },

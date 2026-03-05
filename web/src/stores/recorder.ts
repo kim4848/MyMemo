@@ -24,9 +24,11 @@ interface RecorderState {
   elapsedMs: number;
   audioSource: AudioSource;
   outputMode: OutputMode;
+  context: string;
 
   setAudioSource: (source: AudioSource) => void;
   setOutputMode: (mode: OutputMode) => void;
+  setContext: (context: string) => void;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
   finalize: () => Promise<void>;
@@ -52,14 +54,16 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
   elapsedMs: 0,
   audioSource: 'microphone',
   outputMode: 'full',
+  context: '',
 
   setAudioSource: (audioSource) => set({ audioSource }),
   setOutputMode: (outputMode) => set({ outputMode }),
+  setContext: (context) => set({ context }),
 
   startRecording: async () => {
-    const { audioSource, outputMode } = get();
+    const { audioSource, outputMode, context } = get();
 
-    const session = await api.sessions.create({ outputMode, audioSource });
+    const session = await api.sessions.create({ outputMode, audioSource, ...(context ? { context } : {}) });
     set({ sessionId: session.id, status: 'recording', chunks: [] });
 
     audioService = new AudioCaptureService();

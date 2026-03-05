@@ -82,5 +82,16 @@ public class SessionEndpointsTests : IClassFixture<WebApplicationFactory<Program
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
+    [Fact]
+    public async Task CreateSession_WithContext_Returns201()
+    {
+        var response = await _client.PostAsJsonAsync("/api/sessions", new { outputMode = "full", audioSource = "microphone", context = "Møde med København" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var body = await response.Content.ReadFromJsonAsync<SessionWithContextResponse>();
+        body!.Context.Should().Be("Møde med København");
+    }
+
     private sealed record SessionResponse(string Id, string Status, string OutputMode);
+    private sealed record SessionWithContextResponse(string Id, string Status, string OutputMode, string? Context);
 }
