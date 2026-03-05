@@ -26,7 +26,7 @@ export default function Layout() {
 
   if (!isLoaded) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-navy-950">
+      <div className="flex min-h-dvh items-center justify-center bg-navy-950">
         <div className="text-gray-400">Loading...</div>
       </div>
     );
@@ -80,7 +80,7 @@ export default function Layout() {
   );
 
   return (
-    <div className="flex min-h-screen bg-navy-950">
+    <div className="flex min-h-dvh bg-navy-950">
       {/* Mobile top bar */}
       <div className="fixed inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b border-navy-700 bg-navy-900 px-4 md:hidden">
         <Link to="/" className="text-lg font-bold text-white tracking-wide">
