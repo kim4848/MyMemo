@@ -18,10 +18,10 @@ export default function SessionCard({ session, onDelete }: Props) {
   const style = statusStyles[session.status] ?? { bg: '', text: '' };
 
   return (
-    <div className="group flex items-center justify-between rounded-xl border border-navy-700 bg-navy-800 p-4 transition-colors hover:border-navy-600">
-      <Link to={`/sessions/${session.id}`} className="flex-1">
-        <div className="flex items-center gap-3">
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
+    <div className="group flex items-start justify-between gap-3 rounded-xl border border-navy-700 bg-navy-800 p-4 transition-colors hover:border-navy-600 sm:items-center">
+      <Link to={`/sessions/${session.id}`} className="min-w-0 flex-1">
+        <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+          <span className={`self-start rounded-full px-2.5 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
             {session.status}
           </span>
           <span className="text-sm text-gray-300">
@@ -37,7 +37,7 @@ export default function SessionCard({ session, onDelete }: Props) {
       </Link>
       <button
         onClick={() => onDelete(session.id)}
-        className="ml-4 text-sm text-gray-600 opacity-0 transition-opacity hover:text-red-400 group-hover:opacity-100"
+        className="shrink-0 text-sm text-gray-600 transition-opacity hover:text-red-400 md:opacity-0 md:group-hover:opacity-100"
       >
         Delete
       </button>

@@ -101,7 +101,7 @@ export default function SessionDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
         <Link
           to="/"
           className="flex items-center gap-1 text-sm text-gray-500 transition-colors hover:text-accent"
@@ -111,7 +111,7 @@ export default function SessionDetailPage() {
           </svg>
           Back
         </Link>
-        <h1 className="text-2xl font-bold text-white">Session</h1>
+        <h1 className="text-xl font-bold text-white sm:text-2xl">Session</h1>
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${sessionStatusStyles[session.status] ?? ''}`}>
           {session.status}
         </span>
@@ -140,13 +140,13 @@ export default function SessionDetailPage() {
       })()}
 
       {chunks.length > 0 && (
-        <div className="rounded-xl border border-navy-700 bg-navy-800 p-5">
+        <div className="rounded-xl border border-navy-700 bg-navy-800 p-4 sm:p-5">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">Chunks</h2>
           <div className="space-y-2">
             {chunks.map((chunk) => (
               <div
                 key={chunk.id}
-                className="flex items-center gap-3 text-sm"
+                className="flex flex-wrap items-center gap-2 text-sm sm:gap-3"
               >
                 <span className={`font-medium transition-colors duration-300 ${chunkStatusStyles[chunk.status]}`}>
                   Chunk {chunk.chunkIndex + 1}
@@ -166,12 +166,12 @@ export default function SessionDetailPage() {
       )}
 
       {(session.status === 'completed' || session.status === 'failed') && memo && (
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <select
             aria-label="Output mode"
             value={selectedMode}
             onChange={(e) => setSelectedMode(e.target.value as OutputMode)}
-            className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-2 text-sm text-gray-200 outline-none focus:border-accent"
+            className="w-full rounded-lg border border-navy-600 bg-navy-700 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-accent sm:w-auto sm:py-2"
           >
             {Object.entries(outputModeLabels).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
