@@ -41,6 +41,10 @@ interface RecorderState {
 const CHUNK_INTERVAL_MS = 3 * 60 * 1000; // 3 minutes
 
 let audioService: AudioCaptureService | null = null;
+
+export function getAudioService(): AudioCaptureService | null {
+  return audioService;
+}
 let mediaRecorder: MediaRecorder | null = null;
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 let chunkInterval: ReturnType<typeof setInterval> | null = null;
