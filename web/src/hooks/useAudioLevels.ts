@@ -6,7 +6,7 @@ export interface AudioLevels {
   system: number;
 }
 
-function readLevel(analyser: AnalyserNode | null, buffer: Uint8Array): number {
+function readLevel(analyser: AnalyserNode | null, buffer: Uint8Array<ArrayBuffer>): number {
   if (!analyser) return 0;
   analyser.getByteFrequencyData(buffer);
   let sum = 0;
@@ -19,7 +19,7 @@ function readLevel(analyser: AnalyserNode | null, buffer: Uint8Array): number {
 export function useAudioLevels(active: boolean): AudioLevels {
   const [levels, setLevels] = useState<AudioLevels>({ mic: 0, system: 0 });
   const rafRef = useRef<number>(0);
-  const bufferRef = useRef<Uint8Array | null>(null);
+  const bufferRef = useRef<Uint8Array<ArrayBuffer> | null>(null);
 
   useEffect(() => {
     if (!active) {
