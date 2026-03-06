@@ -38,6 +38,6 @@ import App from './App';
 
 test('renders app with navigation', () => {
   render(<App />);
-  expect(screen.getByRole('link', { name: 'MyMemo' })).toBeInTheDocument();
-  expect(screen.getByText('New Recording')).toBeInTheDocument();
+  expect(screen.getAllByRole('link', { name: 'MyMemo' }).length).toBeGreaterThan(0);
+  expect(screen.getAllByText('New Recording').length).toBeGreaterThan(0);
 });

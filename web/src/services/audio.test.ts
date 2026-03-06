@@ -24,12 +24,21 @@ const mockConnect = vi.fn();
 const mockDestination = { stream: mockMediaStream };
 const mockCreateMediaStreamSource = vi.fn(() => ({ connect: mockConnect }));
 const mockCreateMediaStreamDestination = vi.fn(() => mockDestination);
+const mockAnalyser = {
+  fftSize: 2048,
+  smoothingTimeConstant: 0.8,
+  frequencyBinCount: 128,
+  getByteFrequencyData: vi.fn(),
+  connect: mockConnect,
+};
+const mockCreateAnalyser = vi.fn(() => mockAnalyser);
 
 vi.stubGlobal(
   'AudioContext',
   vi.fn(function (this: Record<string, unknown>) {
     this.createMediaStreamSource = mockCreateMediaStreamSource;
     this.createMediaStreamDestination = mockCreateMediaStreamDestination;
+    this.createAnalyser = mockCreateAnalyser;
     this.close = vi.fn();
   }),
 );
