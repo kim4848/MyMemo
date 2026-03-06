@@ -210,6 +210,58 @@ describe('SessionDetailPage', () => {
     expect(contextSection).toHaveTextContent('Møde med København');
   });
 
+  test('shows retry button when session is failed and no memo', async () => {
+    vi.mocked(api.sessions.get).mockResolvedValue({
+      ...mockDetail,
+      session: { ...mockDetail.session, status: 'failed' },
+    });
+    vi.mocked(api.memos.get).mockRejectedValue({ status: 404 });
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+    });
+    expect(screen.getByText(/session processing failed/i)).toBeInTheDocument();
+  });
+
+  test('retry button calls regenerate API and sets status to processing', async () => {
+    const user = userEvent.setup();
+    vi.mocked(api.sessions.get).mockResolvedValue({
+      ...mockDetail,
+      session: { ...mockDetail.session, status: 'failed' },
+    });
+    vi.mocked(api.memos.get).mockRejectedValue({ status: 404 });
+    vi.mocked(api.memos.regenerate).mockResolvedValue(undefined);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByRole('button', { name: /retry/i }));
+
+    expect(api.memos.regenerate).toHaveBeenCalledWith('sess1', 'full', undefined);
+  });
+
+  test('does not show retry button when session is failed but memo exists', async () => {
+    vi.mocked(api.sessions.get).mockResolvedValue({
+      ...mockDetail,
+      session: { ...mockDetail.session, status: 'failed' },
+    });
+    vi.mocked(api.memos.get).mockResolvedValue(mockMemo);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText(/failed/i)).toBeInTheDocument();
+    });
+    // Should show regenerate instead of retry since memo exists
+    expect(screen.queryByRole('button', { name: /^retry$/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /regenerate/i })).toBeInTheDocument();
+  });
+
   test('shows context textarea in regenerate section', async () => {
     vi.mocked(api.sessions.get).mockResolvedValue(mockDetail);
     vi.mocked(api.memos.get).mockResolvedValue(mockMemo);

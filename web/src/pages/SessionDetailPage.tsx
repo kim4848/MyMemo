@@ -29,6 +29,7 @@ export default function SessionDetailPage() {
   const [selectedMode, setSelectedMode] = useState<OutputMode>('full');
   const [editContext, setEditContext] = useState('');
   const [regenerating, setRegenerating] = useState(false);
+  const [retrying, setRetrying] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
@@ -171,6 +172,35 @@ export default function SessionDetailPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {session.status === 'failed' && !memo && (
+        <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4 sm:p-5">
+          <p className="mb-3 text-sm text-red-400">
+            Session processing failed. You can retry to regenerate the memo.
+          </p>
+          <button
+            disabled={retrying}
+            onClick={async () => {
+              if (!id) return;
+              setRetrying(true);
+              try {
+                await api.memos.regenerate(id, selectedMode, editContext || undefined);
+                setMemo(null);
+                setDetail((prev) =>
+                  prev ? { ...prev, session: { ...prev.session, status: 'processing', outputMode: selectedMode, context: editContext || null } } : prev,
+                );
+              } catch {
+                // Stay on failed state if retry itself fails
+              } finally {
+                setRetrying(false);
+              }
+            }}
+            className="rounded-lg bg-red-500 px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {retrying ? 'Retrying...' : 'Retry'}
+          </button>
         </div>
       )}
 
