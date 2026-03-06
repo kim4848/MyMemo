@@ -107,4 +107,13 @@ public sealed class SessionRepository(IDbConnectionFactory db) : ISessionReposit
             new { id, now });
         return rowsAffected > 0;
     }
+
+    public async Task ResetMemoQueuedAsync(string id)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        await conn.ExecuteAsync(
+            "UPDATE sessions SET memo_queued = 0, updated_at = @now WHERE id = @id",
+            new { id, now });
+    }
 }

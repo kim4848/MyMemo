@@ -15,8 +15,10 @@ public sealed class MemoGenerationProcessor(
     IMemoGeneratorService memoGenerator,
     ILogger<MemoGenerationProcessor> logger)
 {
+    private const int MaxRetries = 3;
+
     /// <returns>true if the job was handled (success, duplicate, or permanent skip); false if it should be retried.</returns>
-    public async Task<bool> ProcessAsync(string sessionId)
+    public async Task<bool> ProcessAsync(string sessionId, long dequeueCount)
     {
         try
         {
@@ -73,7 +75,16 @@ public sealed class MemoGenerationProcessor(
                 return true;
             }
 
-            logger.LogError(ex, "Memo generation failed for session {SessionId}", sessionId);
+            // Retry transient errors up to MaxRetries before marking as permanently failed
+            if (dequeueCount < MaxRetries)
+            {
+                logger.LogWarning(ex, "Memo generation failed for session {SessionId} (attempt {Attempt}/{MaxRetries}), will retry",
+                    sessionId, dequeueCount, MaxRetries);
+                return false;
+            }
+
+            logger.LogError(ex, "Memo generation permanently failed for session {SessionId} after {Attempts} attempts",
+                sessionId, dequeueCount);
             await sessions.UpdateStatusAsync(sessionId, "failed");
             return true;
         }
@@ -92,7 +103,8 @@ public sealed class MemoGenerationWorker(
 
         while (!stoppingToken.IsCancellationRequested)
         {
-            var response = await queue.ReceiveMessageAsync(cancellationToken: stoppingToken);
+            // Use 5-minute visibility timeout — LLM streaming can take well over the 30-second default
+            var response = await queue.ReceiveMessageAsync(TimeSpan.FromMinutes(5), stoppingToken);
             if (response.Value is null)
             {
                 await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
@@ -103,7 +115,8 @@ public sealed class MemoGenerationWorker(
             try
             {
                 var body = JsonSerializer.Deserialize<MemoJob>(message.MessageText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-                logger.LogInformation("Processing memo generation for session {SessionId}", body.SessionId);
+                logger.LogInformation("Processing memo generation for session {SessionId} (attempt {Attempt})",
+                    body.SessionId, message.DequeueCount);
 
                 using var scope = serviceProvider.CreateScope();
                 var processor = new MemoGenerationProcessor(
@@ -114,7 +127,7 @@ public sealed class MemoGenerationWorker(
                     scope.ServiceProvider.GetRequiredService<IMemoGeneratorService>(),
                     scope.ServiceProvider.GetRequiredService<ILogger<MemoGenerationProcessor>>());
 
-                var handled = await processor.ProcessAsync(body.SessionId);
+                var handled = await processor.ProcessAsync(body.SessionId, message.DequeueCount);
                 if (handled)
                     await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
             }

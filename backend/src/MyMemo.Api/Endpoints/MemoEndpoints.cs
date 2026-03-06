@@ -94,6 +94,7 @@ public static class MemoEndpoints
             return Results.BadRequest(new { error = $"Invalid output mode. Must be one of: {string.Join(", ", ValidOutputModes)}" });
 
         await memos.DeleteBySessionIdAsync(sessionId);
+        await sessions.ResetMemoQueuedAsync(sessionId);
         await sessions.UpdateOutputModeAsync(sessionId, request.OutputMode);
         if (request.Context is not null)
             await sessions.UpdateContextAsync(sessionId, request.Context);

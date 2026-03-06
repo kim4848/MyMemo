@@ -18,5 +18,5 @@ public sealed class AzureOpenAIOptions
     public required string Endpoint { get; init; }
     public required string ApiKey { get; init; }
     public string WhisperDeployment { get; init; } = "whisper-1";
-    public string GptDeployment { get; init; } = "gpt-4.1-mini";
+    public string GptDeployment { get; init; } = "gpt-4.1-nano";
 }

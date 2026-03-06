@@ -14,4 +14,5 @@ public interface ISessionRepository
     Task UpdateOutputModeAsync(string id, string outputMode);
     Task UpdateContextAsync(string id, string? context);
     Task<bool> TrySetMemoQueuedAsync(string id);
+    Task ResetMemoQueuedAsync(string id);
 }
