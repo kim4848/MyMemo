@@ -43,7 +43,7 @@ public class MemoGenerationWorkerTests
         _memoGenerator.GenerateAsync("Hej med dig.\n\nHvordan går det?", "full", null)
             .Returns(new MemoResult("Renskrevet memo", "gpt-4.1-mini", 100, 50));
 
-        var result = await _sut.ProcessAsync("session-1");
+        var result = await _sut.ProcessAsync("session-1", dequeueCount: 1);
 
         result.Should().BeTrue();
         await _memos.Received(1).CreateAsync("session-1", "full", "Renskrevet memo", "gpt-4.1-mini", 100, 50, Arg.Any<long?>());
@@ -51,7 +51,7 @@ public class MemoGenerationWorkerTests
     }
 
     [Fact]
-    public async Task ProcessAsync_SetsFailedStatus_OnError()
+    public async Task ProcessAsync_RetriesOnError_WhenUnderMaxRetries()
     {
         _sessions.GetByIdAsync("session-1").Returns(new Session
         {
@@ -64,7 +64,27 @@ public class MemoGenerationWorkerTests
         _memoGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
             .Throws(new Exception("LLM error"));
 
-        var result = await _sut.ProcessAsync("session-1");
+        var result = await _sut.ProcessAsync("session-1", dequeueCount: 1);
+
+        result.Should().BeFalse();
+        await _sessions.DidNotReceive().UpdateStatusAsync("session-1", "failed");
+    }
+
+    [Fact]
+    public async Task ProcessAsync_SetsFailedStatus_AfterMaxRetries()
+    {
+        _sessions.GetByIdAsync("session-1").Returns(new Session
+        {
+            Id = "session-1", UserId = "user-1", Status = "processing",
+            OutputMode = "full", AudioSource = "microphone",
+            StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
+        });
+
+        _transcriptions.ListBySessionAsync("session-1").Returns(new List<Transcription>());
+        _memoGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+            .Throws(new Exception("LLM error"));
+
+        var result = await _sut.ProcessAsync("session-1", dequeueCount: 3);
 
         result.Should().BeTrue();
         await _sessions.Received(1).UpdateStatusAsync("session-1", "failed");
@@ -88,7 +108,7 @@ public class MemoGenerationWorkerTests
         _memoGenerator.GenerateAsync("Vi skal bygge en ny feature.", "product-planning", null)
             .Returns(new MemoResult("Produktplan", "gpt-4.1-mini", 80, 40));
 
-        var result = await _sut.ProcessAsync("session-1");
+        var result = await _sut.ProcessAsync("session-1", dequeueCount: 1);
 
         result.Should().BeTrue();
         await _memos.Received(1).CreateAsync("session-1", "product-planning", "Produktplan", "gpt-4.1-mini", 80, 40, Arg.Any<long?>());
@@ -114,7 +134,7 @@ public class MemoGenerationWorkerTests
         _memoGenerator.GenerateAsync("Vi talte om overdragelse.", "summary", "Møde med København, deltagere: Anne og Bjarne")
             .Returns(new MemoResult("Referat", "gpt-4.1-mini", 90, 45));
 
-        var result = await _sut.ProcessAsync("session-1");
+        var result = await _sut.ProcessAsync("session-1", dequeueCount: 1);
 
         result.Should().BeTrue();
         await _memoGenerator.Received(1).GenerateAsync("Vi talte om overdragelse.", "summary", "Møde med København, deltagere: Anne og Bjarne");
@@ -132,7 +152,7 @@ public class MemoGenerationWorkerTests
             StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
         });
 
-        var result = await _sut.ProcessAsync("session-1");
+        var result = await _sut.ProcessAsync("session-1", dequeueCount: 1);
 
         result.Should().BeTrue();
         await _memoGenerator.DidNotReceive().GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>());
@@ -151,7 +171,7 @@ public class MemoGenerationWorkerTests
             StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
         });
 
-        var result = await _sut.ProcessAsync("session-1");
+        var result = await _sut.ProcessAsync("session-1", dequeueCount: 1);
 
         result.Should().BeFalse();
         await _memoGenerator.DidNotReceive().GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>());
