@@ -1,8 +1,18 @@
 import type { AudioSource } from '../types';
 
+export interface AudioAnalysers {
+  mic: AnalyserNode | null;
+  system: AnalyserNode | null;
+}
+
 export class AudioCaptureService {
   private streams: MediaStream[] = [];
   private audioContext: AudioContext | null = null;
+  private _analysers: AudioAnalysers = { mic: null, system: null };
+
+  get analysers(): AudioAnalysers {
+    return this._analysers;
+  }
 
   async getStream(source: AudioSource): Promise<MediaStream> {
     this.stop();
@@ -12,6 +22,12 @@ export class AudioCaptureService {
         audio: true,
       });
       this.streams = [stream];
+
+      this.audioContext = new AudioContext();
+      const micSource = this.audioContext.createMediaStreamSource(stream);
+      this._analysers.mic = this.createAnalyser(this.audioContext);
+      micSource.connect(this._analysers.mic);
+
       return stream;
     }
 
@@ -23,6 +39,12 @@ export class AudioCaptureService {
       // Discard video tracks
       stream.getVideoTracks().forEach((t) => t.stop());
       this.streams = [stream];
+
+      this.audioContext = new AudioContext();
+      const sysSource = this.audioContext.createMediaStreamSource(stream);
+      this._analysers.system = this.createAnalyser(this.audioContext);
+      sysSource.connect(this._analysers.system);
+
       return stream;
     }
 
@@ -40,7 +62,13 @@ export class AudioCaptureService {
     const micSource = this.audioContext.createMediaStreamSource(micStream);
     const sysSource = this.audioContext.createMediaStreamSource(sysStream);
     const destination = this.audioContext.createMediaStreamDestination();
+
+    this._analysers.mic = this.createAnalyser(this.audioContext);
+    this._analysers.system = this.createAnalyser(this.audioContext);
+
+    micSource.connect(this._analysers.mic);
     micSource.connect(destination);
+    sysSource.connect(this._analysers.system);
     sysSource.connect(destination);
 
     this.streams = [micStream, sysStream];
@@ -52,7 +80,15 @@ export class AudioCaptureService {
       stream.getTracks().forEach((t) => t.stop());
     }
     this.streams = [];
+    this._analysers = { mic: null, system: null };
     this.audioContext?.close();
     this.audioContext = null;
+  }
+
+  private createAnalyser(ctx: AudioContext): AnalyserNode {
+    const analyser = ctx.createAnalyser();
+    analyser.fftSize = 256;
+    analyser.smoothingTimeConstant = 0.7;
+    return analyser;
   }
 }
