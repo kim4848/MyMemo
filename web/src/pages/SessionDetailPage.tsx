@@ -30,6 +30,8 @@ export default function SessionDetailPage() {
   const [editContext, setEditContext] = useState('');
   const [regenerating, setRegenerating] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [contextOpen, setContextOpen] = useState(true);
+  const [chunksOpen, setChunksOpen] = useState(true);
   const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
@@ -57,6 +59,14 @@ export default function SessionDetailPage() {
 
     load();
   }, [id]);
+
+  // Collapse context & chunks once memo is available
+  useEffect(() => {
+    if (memo) {
+      setContextOpen(false);
+      setChunksOpen(false);
+    }
+  }, [memo]);
 
   // Poll for session detail + memo when session is processing
   useEffect(() => {
@@ -126,8 +136,22 @@ export default function SessionDetailPage() {
 
       {session.context && (
         <div className="rounded-xl border border-navy-700 bg-navy-800 p-4">
-          <h2 className="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500">Kontekst</h2>
-          <p className="text-sm text-gray-300 whitespace-pre-wrap">{session.context}</p>
+          <button
+            type="button"
+            onClick={() => setContextOpen((o) => !o)}
+            className="flex w-full items-center justify-between"
+          >
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-gray-500">Kontekst</h2>
+            <svg
+              className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${contextOpen ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          {contextOpen && (
+            <p className="mt-2 text-sm text-gray-300 whitespace-pre-wrap">{session.context}</p>
+          )}
         </div>
       )}
 
@@ -151,27 +175,41 @@ export default function SessionDetailPage() {
 
       {chunks.length > 0 && (
         <div className="rounded-xl border border-navy-700 bg-navy-800 p-4 sm:p-5">
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">Chunks</h2>
-          <div className="space-y-2">
-            {chunks.map((chunk) => (
-              <div
-                key={chunk.id}
-                className="flex flex-wrap items-center gap-2 text-sm sm:gap-3"
-              >
-                <span className={`font-medium transition-colors duration-300 ${chunkStatusStyles[chunk.status]}`}>
-                  Chunk {chunk.chunkIndex + 1}
-                </span>
-                <span className="transition-colors duration-300 text-gray-600">{chunk.status}</span>
-                {detail.transcriptionDurations[chunk.id] != null && (
-                  <span className="text-gray-600">
-                    ({detail.transcriptionDurations[chunk.id] >= 1000
-                      ? `${(detail.transcriptionDurations[chunk.id] / 1000).toFixed(1)}s`
-                      : `${detail.transcriptionDurations[chunk.id]}ms`})
+          <button
+            type="button"
+            onClick={() => setChunksOpen((o) => !o)}
+            className="flex w-full items-center justify-between"
+          >
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Chunks</h2>
+            <svg
+              className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${chunksOpen ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          {chunksOpen && (
+            <div className="mt-3 space-y-2">
+              {chunks.map((chunk) => (
+                <div
+                  key={chunk.id}
+                  className="flex flex-wrap items-center gap-2 text-sm sm:gap-3"
+                >
+                  <span className={`font-medium transition-colors duration-300 ${chunkStatusStyles[chunk.status]}`}>
+                    Chunk {chunk.chunkIndex + 1}
                   </span>
-                )}
-              </div>
-            ))}
-          </div>
+                  <span className="transition-colors duration-300 text-gray-600">{chunk.status}</span>
+                  {detail.transcriptionDurations[chunk.id] != null && (
+                    <span className="text-gray-600">
+                      ({detail.transcriptionDurations[chunk.id] >= 1000
+                        ? `${(detail.transcriptionDurations[chunk.id] / 1000).toFixed(1)}s`
+                        : `${detail.transcriptionDurations[chunk.id]}ms`})
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
