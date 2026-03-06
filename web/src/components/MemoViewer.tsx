@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { Memo, Session } from '../types';
 import { outputModeLabels } from '../types';
 import { useMicrosoftAuth } from '../hooks/useMicrosoftAuth';
@@ -15,9 +15,37 @@ function formatDuration(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
 }
 
+function memoToHtml(content: string): string {
+  const paragraphs = content
+    .split('\n')
+    .map((line) => `<p>${line || '&nbsp;'}</p>`)
+    .join('\n');
+  return paragraphs;
+}
+
 export default function MemoViewer({ memo, isProcessing, allTranscribed, session }: Props) {
   const { isAuthenticated, login } = useMicrosoftAuth();
   const [showPickerModal, setShowPickerModal] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = useCallback(async () => {
+    if (!memo) return;
+    const html = memoToHtml(memo.content);
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([memo.content], { type: 'text/plain' }),
+        }),
+      ]);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      await navigator.clipboard.writeText(memo.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  }, [memo]);
   if (isProcessing && !memo) {
     return (
       <div className="rounded-xl border border-blue-500/20 bg-blue-500/10 p-5">
@@ -42,15 +70,23 @@ export default function MemoViewer({ memo, isProcessing, allTranscribed, session
         <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-medium text-accent">
           {outputModeLabels[memo.outputMode]}
         </span>
-        <button
-          onClick={async () => {
-            if (!isAuthenticated) await login();
-            setShowPickerModal(true);
-          }}
-          className="ml-auto rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent sm:py-1"
-        >
-          Send to OneNote
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button
+            onClick={handleCopy}
+            className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent sm:py-1"
+          >
+            {copied ? 'Kopieret!' : 'Kopiér'}
+          </button>
+          <button
+            onClick={async () => {
+              if (!isAuthenticated) await login();
+              setShowPickerModal(true);
+            }}
+            className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent sm:py-1"
+          >
+            Send to OneNote
+          </button>
+        </div>
       </div>
       {showPickerModal && session && (
         <OneNotePickerModal
