@@ -64,7 +64,7 @@ const mockMemo: Memo = {
   sessionId: 'sess1',
   outputMode: 'full',
   content: 'This is the cleaned transcript.',
-  modelUsed: 'gpt-4.1-nano',
+  modelUsed: 'gpt-5.3-chat',
   promptTokens: 1000,
   completionTokens: 500,
   generationDurationMs: 3200,

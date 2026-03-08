@@ -28,7 +28,7 @@ public class MemoRepositoryTests : IDisposable
     public async Task DeleteBySessionIdAsync_RemovesMemo()
     {
         var sessionId = await CreateTestSession();
-        await _sut.CreateAsync(sessionId, "full", "Test content", "gpt-4.1-mini", 100, 50, 3200);
+        await _sut.CreateAsync(sessionId, "full", "Test content", "gpt-5.3-chat", 100, 50, 3200);
 
         var before = await _sut.GetBySessionIdAsync(sessionId);
         before.Should().NotBeNull();
@@ -43,7 +43,7 @@ public class MemoRepositoryTests : IDisposable
     public async Task CreateAsync_StoresGenerationDuration()
     {
         var sessionId = await CreateTestSession();
-        await _sut.CreateAsync(sessionId, "full", "Test content", "gpt-4.1-mini", 100, 50, 3200);
+        await _sut.CreateAsync(sessionId, "full", "Test content", "gpt-5.3-chat", 100, 50, 3200);
 
         var memo = await _sut.GetBySessionIdAsync(sessionId);
         memo.Should().NotBeNull();
