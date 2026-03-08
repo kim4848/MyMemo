@@ -60,12 +60,10 @@ builder.Services.AddScoped<IInfographicRepository, InfographicRepository>();
 // Azure services
 builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection("AzureBlob"));
 builder.Services.Configure<StorageQueueOptions>(builder.Configuration.GetSection("StorageQueue"));
-builder.Services.Configure<AzureOpenAIOptions>(builder.Configuration.GetSection("AzureOpenAI"));
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
 builder.Services.AddSingleton<IQueueService, QueueService>();
 builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
-builder.Services.AddSingleton<IInfographicService, InfographicService>();
 
 var app = builder.Build();
 

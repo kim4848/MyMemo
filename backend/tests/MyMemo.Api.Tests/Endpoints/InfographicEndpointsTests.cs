@@ -16,12 +16,12 @@ namespace MyMemo.Api.Tests.Endpoints;
 public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
 {
     private readonly HttpClient _client;
-    private readonly IInfographicService _infographicService;
+    private readonly IQueueService _queueService;
     private readonly IDbConnectionFactory _dbFactory;
 
     public InfographicEndpointsTests(WebApplicationFactory<Program> factory)
     {
-        _infographicService = Substitute.For<IInfographicService>();
+        _queueService = Substitute.For<IQueueService>();
 
         IDbConnectionFactory? capturedDbFactory = null;
 
@@ -42,8 +42,7 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
                 services.AddSingleton<IDbConnectionFactory>(dbFactory);
                 capturedDbFactory = dbFactory;
                 services.AddSingleton(Substitute.For<IBlobStorageService>());
-                services.AddSingleton(Substitute.For<IQueueService>());
-                services.AddSingleton(_infographicService);
+                services.AddSingleton(_queueService);
             });
         });
 
@@ -68,19 +67,14 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Fact]
-    public async Task GenerateInfographic_Returns200_WithMemo()
+    public async Task GenerateInfographic_Returns202_WithMemo()
     {
         var sessionId = await CreateSessionWithMemo();
 
-        _infographicService.GenerateAsync("Test memo content", "full")
-            .Returns(new InfographicResult("<svg>test</svg>", "gpt-4.1-mini", 200, 800));
-
         var response = await _client.PostAsync($"/api/sessions/{sessionId}/infographic", null);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var infographic = await response.Content.ReadFromJsonAsync<InfographicResponse>();
-        infographic.Should().NotBeNull();
-        infographic!.SvgContent.Should().Be("<svg>test</svg>");
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        await _queueService.Received(1).SendInfographicGenerationJobAsync(sessionId);
     }
 
     [Fact]
@@ -113,14 +107,15 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Fact]
-    public async Task GetInfographic_Returns200_AfterGeneration()
+    public async Task GetInfographic_Returns200_WhenExists()
     {
         var sessionId = await CreateSessionWithMemo();
 
-        _infographicService.GenerateAsync("Test memo content", "full")
-            .Returns(new InfographicResult("<svg>infographic</svg>", "gpt-4.1-mini", 150, 600));
-
-        await _client.PostAsync($"/api/sessions/{sessionId}/infographic", null);
+        // Simulate worker having created the infographic
+        using var conn = await _dbFactory.CreateConnectionAsync();
+        await Dapper.SqlMapper.ExecuteAsync(conn,
+            "INSERT INTO infographics (id, session_id, svg_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, '<svg>infographic</svg>', 'gpt-4.1-mini', 150, 600, @now)",
+            new { id = Guid.NewGuid().ToString("N"), sessionId, now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") });
 
         var response = await _client.GetAsync($"/api/sessions/{sessionId}/infographic");
 
@@ -134,10 +129,11 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
     {
         var sessionId = await CreateSessionWithMemo();
 
-        _infographicService.GenerateAsync("Test memo content", "full")
-            .Returns(new InfographicResult("<svg>del</svg>", "gpt-4.1-mini", 100, 400));
-
-        await _client.PostAsync($"/api/sessions/{sessionId}/infographic", null);
+        // Simulate worker having created the infographic
+        using var conn = await _dbFactory.CreateConnectionAsync();
+        await Dapper.SqlMapper.ExecuteAsync(conn,
+            "INSERT INTO infographics (id, session_id, svg_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, '<svg>del</svg>', 'gpt-4.1-mini', 100, 400, @now)",
+            new { id = Guid.NewGuid().ToString("N"), sessionId, now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") });
 
         var response = await _client.DeleteAsync($"/api/sessions/{sessionId}/infographic");
 
@@ -148,21 +144,25 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     [Fact]
-    public async Task GenerateInfographic_ReplacesExisting()
+    public async Task GenerateInfographic_DeletesExistingBeforeQueuing()
     {
         var sessionId = await CreateSessionWithMemo();
 
-        _infographicService.GenerateAsync("Test memo content", "full")
-            .Returns(
-                new InfographicResult("<svg>first</svg>", "gpt-4.1-mini", 100, 400),
-                new InfographicResult("<svg>second</svg>", "gpt-4.1-mini", 100, 400));
+        // Simulate existing infographic
+        using var conn = await _dbFactory.CreateConnectionAsync();
+        await Dapper.SqlMapper.ExecuteAsync(conn,
+            "INSERT INTO infographics (id, session_id, svg_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, '<svg>first</svg>', 'gpt-4.1-mini', 100, 400, @now)",
+            new { id = Guid.NewGuid().ToString("N"), sessionId, now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") });
 
-        await _client.PostAsync($"/api/sessions/{sessionId}/infographic", null);
         var response = await _client.PostAsync($"/api/sessions/{sessionId}/infographic", null);
 
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var infographic = await response.Content.ReadFromJsonAsync<InfographicResponse>();
-        infographic!.SvgContent.Should().Be("<svg>second</svg>");
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+
+        // Existing infographic should have been deleted
+        var getResponse = await _client.GetAsync($"/api/sessions/{sessionId}/infographic");
+        getResponse.StatusCode.Should().Be(HttpStatusCode.NotFound);
+
+        await _queueService.Received(1).SendInfographicGenerationJobAsync(sessionId);
     }
 
     private sealed record SessionIdResponse(string Id);

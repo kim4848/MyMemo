@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Security.Claims;
 using MyMemo.Shared.Repositories;
 using MyMemo.Shared.Services;
@@ -22,7 +21,7 @@ public static class InfographicEndpoints
         ISessionRepository sessions,
         IMemoRepository memos,
         IInfographicRepository infographics,
-        IInfographicService infographicService,
+        IQueueService queueService,
         IUserRepository users,
         ClaimsPrincipal principal)
     {
@@ -41,20 +40,10 @@ public static class InfographicEndpoints
         // Delete existing infographic if regenerating
         await infographics.DeleteBySessionIdAsync(sessionId);
 
-        var sw = Stopwatch.StartNew();
-        var result = await infographicService.GenerateAsync(memo.Content, memo.OutputMode);
-        sw.Stop();
+        // Queue infographic generation for async processing by worker
+        await queueService.SendInfographicGenerationJobAsync(sessionId);
 
-        await infographics.CreateAsync(
-            sessionId,
-            result.SvgContent,
-            result.ModelUsed,
-            result.PromptTokens,
-            result.CompletionTokens,
-            sw.ElapsedMilliseconds);
-
-        var infographic = await infographics.GetBySessionIdAsync(sessionId);
-        return Results.Ok(infographic);
+        return Results.Accepted($"/api/sessions/{sessionId}/infographic");
     }
 
     private static async Task<IResult> GetInfographic(

@@ -76,5 +76,10 @@ resource memoQueue 'Microsoft.Storage/storageAccounts/queueServices/queues@2023-
   name: 'memo-generation'
 }
 
+resource infographicQueue 'Microsoft.Storage/storageAccounts/queueServices/queues@2023-05-01' = {
+  parent: queueServices
+  name: 'infographic-generation'
+}
+
 @description('Name of the Storage Account')
 output accountName string = storageAccount.name

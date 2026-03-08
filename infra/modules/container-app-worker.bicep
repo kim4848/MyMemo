@@ -130,6 +130,19 @@ resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
               ]
             }
           }
+          {
+            name: 'infographic-queue'
+            azureQueue: {
+              queueName: 'infographic-generation'
+              queueLength: 1
+              auth: [
+                {
+                  secretRef: 'storage-connection-string'
+                  triggerParameter: 'connection'
+                }
+              ]
+            }
+          }
         ]
       }
     }

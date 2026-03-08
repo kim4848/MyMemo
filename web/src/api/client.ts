@@ -100,8 +100,9 @@ export const api = {
   },
   infographics: {
     generate: (sessionId: string) =>
-      request<Infographic>(`/api/sessions/${sessionId}/infographic`, {
+      request<void>(`/api/sessions/${sessionId}/infographic`, {
         method: 'POST',
+        noContent: true,
       }),
     get: (sessionId: string) =>
       request<Infographic>(`/api/sessions/${sessionId}/infographic`),
