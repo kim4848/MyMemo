@@ -52,6 +52,25 @@ resource gptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10
   ]
 }
 
+resource imageDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+  parent: openAiAccount
+  name: 'gpt-image-1'
+  sku: {
+    name: 'Standard'
+    capacity: 1
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'gpt-image-1'
+      version: '2025-04-15'
+    }
+  }
+  dependsOn: [
+    gptDeployment
+  ]
+}
+
 @description('Endpoint URL for the Azure OpenAI account')
 output endpoint string = openAiAccount.properties.endpoint
 

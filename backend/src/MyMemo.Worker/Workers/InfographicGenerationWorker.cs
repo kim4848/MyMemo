@@ -36,10 +36,9 @@ public sealed class InfographicGenerationProcessor(
 
             await infographics.CreateAsync(
                 sessionId,
-                result.SvgContent,
+                result.ImageBase64,
+                result.ImageFormat,
                 result.ModelUsed,
-                result.PromptTokens,
-                result.CompletionTokens,
                 sw.ElapsedMilliseconds);
 
             logger.LogInformation("Infographic generated for session {SessionId} in {Duration}ms", sessionId, sw.ElapsedMilliseconds);

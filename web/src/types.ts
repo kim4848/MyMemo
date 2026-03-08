@@ -56,10 +56,9 @@ export interface Memo {
 export interface Infographic {
   id: string;
   sessionId: string;
-  svgContent: string;
+  imageContent: string;
+  imageFormat: string;
   modelUsed: string;
-  promptTokens: number | null;
-  completionTokens: number | null;
   generationDurationMs: number | null;
   createdAt: string;
 }
