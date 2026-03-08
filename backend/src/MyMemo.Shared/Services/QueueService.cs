@@ -8,6 +8,7 @@ public sealed class QueueService : IQueueService
 {
     private readonly QueueClient _transcriptionQueue;
     private readonly QueueClient _memoQueue;
+    private readonly QueueClient _infographicQueue;
     private bool _ensured;
 
     public QueueService(IOptions<StorageQueueOptions> options)
@@ -15,6 +16,7 @@ public sealed class QueueService : IQueueService
         var opts = options.Value;
         _transcriptionQueue = new QueueClient(opts.ConnectionString, opts.TranscriptionQueueName);
         _memoQueue = new QueueClient(opts.ConnectionString, opts.MemoGenerationQueueName);
+        _infographicQueue = new QueueClient(opts.ConnectionString, opts.InfographicGenerationQueueName);
     }
 
     private async Task EnsureQueuesAsync()
@@ -22,6 +24,7 @@ public sealed class QueueService : IQueueService
         if (_ensured) return;
         await _transcriptionQueue.CreateIfNotExistsAsync();
         await _memoQueue.CreateIfNotExistsAsync();
+        await _infographicQueue.CreateIfNotExistsAsync();
         _ensured = true;
     }
 
@@ -37,5 +40,12 @@ public sealed class QueueService : IQueueService
         await EnsureQueuesAsync();
         var body = JsonSerializer.Serialize(new { sessionId });
         await _memoQueue.SendMessageAsync(body);
+    }
+
+    public async Task SendInfographicGenerationJobAsync(string sessionId)
+    {
+        await EnsureQueuesAsync();
+        var body = JsonSerializer.Serialize(new { sessionId });
+        await _infographicQueue.SendMessageAsync(body);
     }
 }

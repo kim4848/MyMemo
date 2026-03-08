@@ -65,7 +65,6 @@ builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
 builder.Services.AddSingleton<IQueueService, QueueService>();
 builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
-builder.Services.AddSingleton<IInfographicService, InfographicService>();
 
 var app = builder.Build();
 

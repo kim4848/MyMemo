@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { api } from '../api/client';
 import type { Infographic } from '../types';
 
@@ -16,20 +16,41 @@ export default function InfographicViewer({ sessionId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const svgContainerRef = useRef<HTMLDivElement>(null);
+  const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
+
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
+
+  const startPolling = useCallback(() => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    pollRef.current = setInterval(async () => {
+      try {
+        const result = await api.infographics.get(sessionId);
+        setInfographic(result);
+        setGenerating(false);
+        setShowModal(true);
+        clearInterval(pollRef.current);
+        pollRef.current = undefined;
+      } catch {
+        // Not ready yet — keep polling
+      }
+    }, 3000);
+  }, [sessionId]);
 
   const handleGenerate = useCallback(async () => {
     setGenerating(true);
     setError(null);
     try {
-      const result = await api.infographics.generate(sessionId);
-      setInfographic(result);
-      setShowModal(true);
+      await api.infographics.generate(sessionId);
+      startPolling();
     } catch (e) {
       setError((e as Error).message);
-    } finally {
       setGenerating(false);
     }
-  }, [sessionId]);
+  }, [sessionId, startPolling]);
 
   const handleView = useCallback(async () => {
     if (infographic) {
