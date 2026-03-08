@@ -27,12 +27,14 @@ public sealed class InfographicService : IInfographicService
 
         var prompt = BuildPrompt(memoContent, outputMode);
 
+        #pragma warning disable OPENAI001 // W1024xH1536 is experimental but required for gpt-image-1
         var imageOptions = new ImageGenerationOptions
         {
             Size = GeneratedImageSize.W1024xH1536,
             Quality = GeneratedImageQuality.High,
             ResponseFormat = GeneratedImageFormat.Bytes,
         };
+        #pragma warning restore OPENAI001
 
         var response = await imageClient.GenerateImageAsync(prompt, imageOptions);
         var generatedImage = response.Value;
