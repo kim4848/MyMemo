@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "generate-icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
     "@azure/msal-browser": "^5.4.0",
@@ -38,6 +39,7 @@
     "fake-indexeddb": "^6.2.5",
     "globals": "^16.5.0",
     "jsdom": "^28.1.0",
+    "sharp": "^0.34.5",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.48.0",
     "vite": "^7.3.1",
