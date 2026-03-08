@@ -55,6 +55,7 @@ builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<IChunkRepository, ChunkRepository>();
 builder.Services.AddScoped<ITranscriptionRepository, TranscriptionRepository>();
 builder.Services.AddScoped<IMemoRepository, MemoRepository>();
+builder.Services.AddScoped<IInfographicRepository, InfographicRepository>();
 
 // Azure services
 builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection("AzureBlob"));
@@ -64,6 +65,7 @@ builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 
 builder.Services.AddSingleton<IQueueService, QueueService>();
 builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
+builder.Services.AddSingleton<IInfographicService, InfographicService>();
 
 var app = builder.Build();
 
@@ -89,6 +91,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 SessionEndpoints.Map(app);
 ChunkEndpoints.Map(app);
 MemoEndpoints.Map(app);
+InfographicEndpoints.Map(app);
 
 app.Run();
 

@@ -53,6 +53,17 @@ export interface Memo {
   createdAt: string;
 }
 
+export interface Infographic {
+  id: string;
+  sessionId: string;
+  svgContent: string;
+  modelUsed: string;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  generationDurationMs: number | null;
+  createdAt: string;
+}
+
 export interface CreateSessionRequest {
   outputMode: OutputMode;
   audioSource: AudioSource;
