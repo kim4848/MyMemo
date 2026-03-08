@@ -25,12 +25,13 @@ Memo Generation (part of Worker)
 
 | Component    | Stack                                                                                  |
 |--------------|----------------------------------------------------------------------------------------|
-| `web/`       | React 18+ TypeScript, Tailwind CSS, Zustand, Web Audio API + MediaRecorder, Netlify    |
-| `desktop/`   | Electron (V2 feature)                                                                  |
+| `web/`       | React 19, TypeScript, Vite, Tailwind CSS v4, Zustand, Web Audio API + MediaRecorder    |
+| `desktop/`   | Electron (V2 feature — not yet implemented)                                            |
 | `backend/`   | .NET 8 Minimal API, Azure Container Apps, Azure Service Bus, Azure Blob Storage, Turso |
 | AI           | Azure OpenAI — Whisper (STT), GPT-4.1 Nano (memo generation)                          |
-| Auth         | Clerk (V1)                                                                             |
-| Database     | Turso (libSQL/hosted SQLite)                                                           |
+| Auth         | Clerk (frontend + backend JWT validation)                                              |
+| Database     | Turso (libSQL/hosted SQLite), SQLite for local dev                                     |
+| Infra        | Azure Bicep (IaC), Docker (Alpine multi-stage), GitHub Actions CI/CD                   |
 
 ## Code Conventions
 
@@ -41,18 +42,81 @@ From `.editorconfig`:
 - **Trailing whitespace:** trimmed (except `.md`)
 - **Final newline:** always
 
+## Project Structure
+
+```
+MyMemo/
+├── web/                        # React SPA frontend
+│   ├── src/
+│   │   ├── components/         # UI components (AudioLevelIndicator, Layout, MemoViewer, etc.)
+│   │   ├── pages/              # DashboardPage, LoginPage, RecorderPage, SessionDetailPage
+│   │   ├── stores/             # Zustand stores (recorder, sessions)
+│   │   ├── api/                # API client
+│   │   ├── services/           # Business logic (recorder, sessions)
+│   │   ├── hooks/              # Custom hooks (audio levels)
+│   │   └── lib/                # Utility functions
+│   └── netlify.toml            # Netlify config with API proxy
+├── backend/
+│   ├── src/
+│   │   ├── MyMemo.Api/         # ASP.NET Core Minimal API
+│   │   ├── MyMemo.Worker/      # Background processing (transcription + memo generation)
+│   │   └── MyMemo.Shared/      # Shared library (models, repos, services, database)
+│   ├── tests/
+│   │   ├── MyMemo.Api.Tests/
+│   │   ├── MyMemo.Worker.Tests/
+│   │   └── MyMemo.Shared.Tests/
+│   ├── docker-compose.yml      # Local dev: API + Worker + Azurite
+│   └── MyMemo.sln
+├── desktop/                    # Electron app (V2 — placeholder only)
+├── infra/                      # Azure Bicep IaC templates
+├── docs/
+│   ├── technical-specification.md
+│   └── plans/                  # Implementation planning docs
+└── .github/workflows/          # CI/CD pipelines
+```
+
 ## Build & Development
 
-Project is in initialization phase — no runnable code yet. Commands will be added as components are scaffolded. See component READMEs:
-- `web/README.md`
-- `backend/README.md`
-- `desktop/README.md`
+### Frontend (`web/`)
+
+```bash
+cd web
+npm install
+npm run dev          # Vite dev server
+npm run build        # tsc -b && vite build
+npm run lint         # ESLint
+npm run test         # Vitest
+npm run test:watch   # Vitest watch mode
+```
+
+### Backend (`backend/`)
+
+```bash
+cd backend
+dotnet restore
+dotnet build
+dotnet test
+
+# Local development with Docker (API + Worker + Azurite)
+docker-compose up
+```
+
+### CI/CD
+
+- `backend-ci.yml` — Runs on backend changes: restore → build → test
+- `backend-deploy.yml` — On main: build → test → push Docker images to ACR → deploy to Azure Container Apps
 
 ## Database & Migrations
 
 Backend uses **Dapper** (micro-ORM with raw SQL) — NOT Entity Framework Core. There is no auto-generated migration tooling.
 
-When adding or changing a model property, you MUST update all three locations:
+**Models:** User, Session, Chunk, Transcription, Memo (in `backend/src/MyMemo.Shared/Models/`)
+
+**Database factories:**
+- `SqliteConnectionFactory` — local development
+- `TursoConnectionFactory` — production (custom ADO.NET wrapper for Turso HTTP API)
+
+When adding or changing a model property, you MUST update all locations:
 
 1. **Model class** — `backend/src/MyMemo.Shared/Models/{Entity}.cs`
 2. **Schema SQL** — `backend/src/MyMemo.Shared/Database/schema.sql` (the `CREATE TABLE` statement)
@@ -61,6 +125,24 @@ When adding or changing a model property, you MUST update all three locations:
 
 The `DatabaseInitializer` runs on startup in both API and Worker. It creates tables from `schema.sql` and applies incremental `ALTER TABLE` migrations.
 
+## Backend Services
+
+| Service               | Purpose                                          |
+|-----------------------|--------------------------------------------------|
+| `WhisperService`      | Azure OpenAI Whisper STT                         |
+| `BlobStorageService`  | Azure Blob Storage for audio chunks              |
+| `QueueService`        | Azure Service Bus job queue                      |
+| `MemoGeneratorService`| GPT-4.1 Nano memo generation                     |
+| `MemoTriggerService`  | Orchestrates memo generation on session finalize  |
+
+## API Endpoints
+
+Defined in `backend/src/MyMemo.Api/Endpoints/`:
+- `SessionEndpoints` — Session CRUD
+- `ChunkEndpoints` — `POST /api/sessions/{sessionId}/chunks` (audio upload)
+- `MemoEndpoints` — Memo retrieval
+
 ## Key References
 
 - `docs/technical-specification.md` — full spec (Danish): API endpoints, data model, LLM prompts, infra, cost estimates, phased rollout
+- `docs/plans/` — implementation planning documents
