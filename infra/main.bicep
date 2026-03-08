@@ -28,6 +28,9 @@ param clerkPublishableKey string
 @description('Clerk domain (e.g. fun-terrapin-71.clerk.accounts.dev)')
 param clerkDomain string
 
+@description('Azure region for the OpenAI account (gpt-5.3-chat is only available in swedencentral)')
+param openAiLocation string = 'swedencentral'
+
 // --- Log Analytics ---
 module logAnalytics 'modules/log-analytics.bicep' = {
   name: 'log-analytics'
@@ -59,7 +62,7 @@ module storage 'modules/storage.bicep' = {
 module openAi 'modules/openai.bicep' = {
   name: 'openai'
   params: {
-    location: location
+    location: openAiLocation
     openAiAccountName: '${environmentName}-openai'
   }
 }

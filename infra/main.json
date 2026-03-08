@@ -59,6 +59,13 @@
       "metadata": {
         "description": "Clerk publishable key"
       }
+    },
+    "openAiLocation": {
+      "type": "string",
+      "defaultValue": "swedencentral",
+      "metadata": {
+        "description": "Azure region for the OpenAI account (gpt-5.3-chat is only available in swedencentral)"
+      }
     }
   },
   "resources": [
@@ -360,7 +367,7 @@
         "mode": "Incremental",
         "parameters": {
           "location": {
-            "value": "[parameters('location')]"
+            "value": "[parameters('openAiLocation')]"
           },
           "openAiAccountName": {
             "value": "[format('{0}-openai', parameters('environmentName'))]"
