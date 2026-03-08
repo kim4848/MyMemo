@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Session } from '../types';
 import { formatDateTime, formatDuration } from '../lib/format';
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function SessionCard({ session, onDelete }: Props) {
+  const [confirming, setConfirming] = useState(false);
   const style = statusStyles[session.status] ?? { bg: '', text: '' };
 
   return (
@@ -35,12 +37,30 @@ export default function SessionCard({ session, onDelete }: Props) {
           </span>
         </div>
       </Link>
-      <button
-        onClick={() => onDelete(session.id)}
-        className="shrink-0 text-sm text-gray-600 transition-opacity hover:text-red-400 md:opacity-0 md:group-hover:opacity-100"
-      >
-        Delete
-      </button>
+      {confirming ? (
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-sm text-gray-400">Are you sure?</span>
+          <button
+            onClick={() => onDelete(session.id)}
+            className="rounded bg-red-500/20 px-2 py-0.5 text-sm text-red-400 hover:bg-red-500/30"
+          >
+            Yes
+          </button>
+          <button
+            onClick={() => setConfirming(false)}
+            className="rounded bg-navy-700 px-2 py-0.5 text-sm text-gray-400 hover:bg-navy-600"
+          >
+            No
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setConfirming(true)}
+          className="shrink-0 text-sm text-gray-600 transition-opacity hover:text-red-400 md:opacity-0 md:group-hover:opacity-100"
+        >
+          Delete
+        </button>
+      )}
     </div>
   );
 }
