@@ -427,7 +427,7 @@
             {
               "type": "Microsoft.CognitiveServices/accounts/deployments",
               "apiVersion": "2024-10-01",
-              "name": "[format('{0}/{1}', parameters('openAiAccountName'), 'gpt-4.1-mini')]",
+              "name": "[format('{0}/{1}', parameters('openAiAccountName'), 'gpt-5.3-chat')]",
               "sku": {
                 "name": "Standard",
                 "capacity": 1
@@ -435,8 +435,8 @@
               "properties": {
                 "model": {
                   "format": "OpenAI",
-                  "name": "gpt-4.1-mini",
-                  "version": "2025-04-14"
+                  "name": "gpt-5.3-chat",
+                  "version": "2026-02-01"
                 }
               },
               "dependsOn": [

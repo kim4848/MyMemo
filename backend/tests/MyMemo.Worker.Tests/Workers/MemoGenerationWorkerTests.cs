@@ -41,12 +41,12 @@ public class MemoGenerationWorkerTests
         });
 
         _memoGenerator.GenerateAsync("Hej med dig.\n\nHvordan går det?", "full", null)
-            .Returns(new MemoResult("Renskrevet memo", "gpt-4.1-mini", 100, 50));
+            .Returns(new MemoResult("Renskrevet memo", "gpt-5.3-chat", 100, 50));
 
         var result = await _sut.ProcessAsync("session-1");
 
         result.Should().BeTrue();
-        await _memos.Received(1).CreateAsync("session-1", "full", "Renskrevet memo", "gpt-4.1-mini", 100, 50, Arg.Any<long?>());
+        await _memos.Received(1).CreateAsync("session-1", "full", "Renskrevet memo", "gpt-5.3-chat", 100, 50, Arg.Any<long?>());
         await _sessions.Received(1).UpdateStatusAsync("session-1", "completed");
     }
 
@@ -86,12 +86,12 @@ public class MemoGenerationWorkerTests
         });
 
         _memoGenerator.GenerateAsync("Vi skal bygge en ny feature.", "product-planning", null)
-            .Returns(new MemoResult("Produktplan", "gpt-4.1-mini", 80, 40));
+            .Returns(new MemoResult("Produktplan", "gpt-5.3-chat", 80, 40));
 
         var result = await _sut.ProcessAsync("session-1");
 
         result.Should().BeTrue();
-        await _memos.Received(1).CreateAsync("session-1", "product-planning", "Produktplan", "gpt-4.1-mini", 80, 40, Arg.Any<long?>());
+        await _memos.Received(1).CreateAsync("session-1", "product-planning", "Produktplan", "gpt-5.3-chat", 80, 40, Arg.Any<long?>());
         await _sessions.Received(1).UpdateStatusAsync("session-1", "completed");
     }
 
@@ -112,7 +112,7 @@ public class MemoGenerationWorkerTests
         });
 
         _memoGenerator.GenerateAsync("Vi talte om overdragelse.", "summary", "Møde med København, deltagere: Anne og Bjarne")
-            .Returns(new MemoResult("Referat", "gpt-4.1-mini", 90, 45));
+            .Returns(new MemoResult("Referat", "gpt-5.3-chat", 90, 45));
 
         var result = await _sut.ProcessAsync("session-1");
 

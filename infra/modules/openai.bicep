@@ -35,7 +35,7 @@ resource whisperDeployment 'Microsoft.CognitiveServices/accounts/deployments@202
 
 resource gptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
   parent: openAiAccount
-  name: 'gpt-4.1-mini'
+  name: 'gpt-5.3-chat'
   sku: {
     name: 'Standard'
     capacity: 1
@@ -43,8 +43,8 @@ resource gptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-4.1-mini'
-      version: '2025-04-14'
+      name: 'gpt-5.3-chat'
+      version: '2026-02-01'
     }
   }
   dependsOn: [
