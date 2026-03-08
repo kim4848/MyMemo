@@ -66,13 +66,23 @@ public sealed class TranscriptionWorker(
         }
     }
 
+    private const int MaxDequeueCount = 5;
+
     private async Task ProcessMessageAsync(QueueClient queue, Azure.Storage.Queues.Models.QueueMessage message, CancellationToken stoppingToken)
     {
         try
         {
+            if (message.DequeueCount > MaxDequeueCount)
+            {
+                logger.LogError("Transcription message exceeded max retries ({MaxRetries}), deleting: {MessageText}",
+                    MaxDequeueCount, message.MessageText);
+                await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
+                return;
+            }
+
             var body = JsonSerializer.Deserialize<TranscriptionJob>(message.MessageText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-            logger.LogInformation("Processing transcription for session {SessionId}, chunk {ChunkIndex}",
-                body.SessionId, body.ChunkIndex);
+            logger.LogInformation("Processing transcription for session {SessionId}, chunk {ChunkIndex} (attempt {Attempt})",
+                body.SessionId, body.ChunkIndex, message.DequeueCount);
 
             using var scope = serviceProvider.CreateScope();
             var processor = new TranscriptionProcessor(
@@ -88,7 +98,10 @@ public sealed class TranscriptionWorker(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error processing transcription message");
+            logger.LogError(ex, "Error processing transcription message (attempt {Attempt}): {MessageText}",
+                message.DequeueCount, message.MessageText);
+            if (message.DequeueCount >= MaxDequeueCount)
+                await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
         }
     }
 
