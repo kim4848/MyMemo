@@ -3,6 +3,7 @@ import type { Memo, Session } from '../types';
 import { outputModeLabels } from '../types';
 import { useMicrosoftAuth } from '../hooks/useMicrosoftAuth';
 import OneNotePickerModal from './OneNotePickerModal';
+import InfographicViewer from './InfographicViewer';
 
 interface Props {
   memo: Memo | null;
@@ -86,6 +87,7 @@ export default function MemoViewer({ memo, isProcessing, allTranscribed, session
           >
             Send to OneNote
           </button>
+          <InfographicViewer sessionId={memo.sessionId} />
         </div>
       </div>
       {showPickerModal && session && (

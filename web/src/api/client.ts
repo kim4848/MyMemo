@@ -3,6 +3,7 @@ import type {
   SessionDetail,
   Chunk,
   Memo,
+  Infographic,
   CreateSessionRequest,
   OutputMode,
 } from '../types';
@@ -94,6 +95,19 @@ export const api = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ outputMode, context }),
+        noContent: true,
+      }),
+  },
+  infographics: {
+    generate: (sessionId: string) =>
+      request<Infographic>(`/api/sessions/${sessionId}/infographic`, {
+        method: 'POST',
+      }),
+    get: (sessionId: string) =>
+      request<Infographic>(`/api/sessions/${sessionId}/infographic`),
+    delete: (sessionId: string) =>
+      request<void>(`/api/sessions/${sessionId}/infographic`, {
+        method: 'DELETE',
         noContent: true,
       }),
   },
