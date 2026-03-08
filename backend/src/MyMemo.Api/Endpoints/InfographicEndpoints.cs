@@ -24,6 +24,7 @@ public static class InfographicEndpoints
         IInfographicRepository infographics,
         IInfographicService infographicService,
         IUserRepository users,
+        ILogger<Program> logger,
         ClaimsPrincipal principal)
     {
         var clerkId = principal.FindFirstValue("sub");
@@ -41,17 +42,27 @@ public static class InfographicEndpoints
         // Delete existing infographic if regenerating
         await infographics.DeleteBySessionIdAsync(sessionId);
 
-        var sw = Stopwatch.StartNew();
-        var result = await infographicService.GenerateAsync(memo.Content, memo.OutputMode);
-        sw.Stop();
+        try
+        {
+            var sw = Stopwatch.StartNew();
+            var result = await infographicService.GenerateAsync(memo.Content, memo.OutputMode);
+            sw.Stop();
 
-        await infographics.CreateAsync(
-            sessionId,
-            result.SvgContent,
-            result.ModelUsed,
-            result.PromptTokens,
-            result.CompletionTokens,
-            sw.ElapsedMilliseconds);
+            await infographics.CreateAsync(
+                sessionId,
+                result.SvgContent,
+                result.ModelUsed,
+                result.PromptTokens,
+                result.CompletionTokens,
+                sw.ElapsedMilliseconds);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Infographic generation failed for session {SessionId}", sessionId);
+            return Results.Json(
+                new { error = "Infographic generation failed. Please try again later." },
+                statusCode: 502);
+        }
 
         var infographic = await infographics.GetBySessionIdAsync(sessionId);
         return Results.Ok(infographic);
