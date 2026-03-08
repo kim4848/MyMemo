@@ -1,5 +1,6 @@
 {
   "enabledPlugins": {
     "firecrawl@claude-plugins-official": true
-  }
+  },
+  "enabledMcpjsonServers": ["excalidraw"]
 }

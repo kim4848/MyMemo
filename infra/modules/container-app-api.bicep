@@ -34,6 +34,9 @@ param clerkSecretKey string
 @description('Clerk publishable key')
 param clerkPublishableKey string
 
+@description('Clerk domain (e.g. fun-terrapin-71.clerk.accounts.dev or your-app.clerk.accounts.com)')
+param clerkDomain string
+
 resource registry 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' existing = {
   name: registryName
 }
@@ -94,11 +97,13 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: '0.5Gi'
           }
           env: [
-            { name: 'Azure__Storage__ConnectionString', secretRef: 'storage-connection-string' }
+            { name: 'AzureBlob__ConnectionString', secretRef: 'storage-connection-string' }
+            { name: 'StorageQueue__ConnectionString', secretRef: 'storage-connection-string' }
             { name: 'Turso__Url', secretRef: 'turso-url' }
             { name: 'Turso__AuthToken', secretRef: 'turso-auth-token' }
             { name: 'Clerk__SecretKey', secretRef: 'clerk-secret-key' }
             { name: 'Clerk__PublishableKey', value: clerkPublishableKey }
+            { name: 'Clerk__Domain', value: clerkDomain }
           ]
         }
       ]

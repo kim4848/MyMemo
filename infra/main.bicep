@@ -25,6 +25,9 @@ param clerkSecretKey string
 @description('Clerk publishable key')
 param clerkPublishableKey string
 
+@description('Clerk domain (e.g. fun-terrapin-71.clerk.accounts.dev)')
+param clerkDomain string
+
 // --- Log Analytics ---
 module logAnalytics 'modules/log-analytics.bicep' = {
   name: 'log-analytics'
@@ -86,6 +89,7 @@ module apiApp 'modules/container-app-api.bicep' = {
     tursoAuthToken: tursoAuthToken
     clerkSecretKey: clerkSecretKey
     clerkPublishableKey: clerkPublishableKey
+    clerkDomain: clerkDomain
   }
 }
 

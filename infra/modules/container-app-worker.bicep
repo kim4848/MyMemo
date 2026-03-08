@@ -91,11 +91,12 @@ resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
             memory: '1Gi'
           }
           env: [
-            { name: 'Azure__Storage__ConnectionString', secretRef: 'storage-connection-string' }
+            { name: 'AzureBlob__ConnectionString', secretRef: 'storage-connection-string' }
+            { name: 'StorageQueue__ConnectionString', secretRef: 'storage-connection-string' }
             { name: 'Turso__Url', secretRef: 'turso-url' }
             { name: 'Turso__AuthToken', secretRef: 'turso-auth-token' }
-            { name: 'Azure__OpenAI__Endpoint', value: openAiEndpoint }
-            { name: 'Azure__OpenAI__Key', secretRef: 'openai-key' }
+            { name: 'AzureOpenAI__Endpoint', value: openAiEndpoint }
+            { name: 'AzureOpenAI__ApiKey', secretRef: 'openai-key' }
           ]
         }
       ]
