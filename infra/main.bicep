@@ -86,8 +86,6 @@ module apiApp 'modules/container-app-api.bicep' = {
     tursoAuthToken: tursoAuthToken
     clerkSecretKey: clerkSecretKey
     clerkPublishableKey: clerkPublishableKey
-    openAiEndpoint: openAi.outputs.endpoint
-    openAiAccountName: openAi.outputs.accountName
   }
 }
 

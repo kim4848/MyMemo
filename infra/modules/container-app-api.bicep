@@ -34,22 +34,12 @@ param clerkSecretKey string
 @description('Clerk publishable key')
 param clerkPublishableKey string
 
-@description('Azure OpenAI endpoint')
-param openAiEndpoint string
-
-@description('Azure OpenAI account name')
-param openAiAccountName string
-
 resource registry 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' existing = {
   name: registryName
 }
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: storageAccountName
-}
-
-resource openAiAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
-  name: openAiAccountName
 }
 
 resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
@@ -92,10 +82,6 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'clerk-secret-key'
           value: clerkSecretKey
         }
-        {
-          name: 'openai-key'
-          value: openAiAccount.listKeys().key1
-        }
       ]
     }
     template: {
@@ -113,8 +99,6 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'Turso__AuthToken', secretRef: 'turso-auth-token' }
             { name: 'Clerk__SecretKey', secretRef: 'clerk-secret-key' }
             { name: 'Clerk__PublishableKey', value: clerkPublishableKey }
-            { name: 'AzureOpenAI__Endpoint', value: openAiEndpoint }
-            { name: 'AzureOpenAI__ApiKey', secretRef: 'openai-key' }
           ]
         }
       ]
