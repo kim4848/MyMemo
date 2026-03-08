@@ -25,6 +25,7 @@ builder.Services.AddScoped<ISessionRepository, SessionRepository>();
 builder.Services.AddScoped<IChunkRepository, ChunkRepository>();
 builder.Services.AddScoped<ITranscriptionRepository, TranscriptionRepository>();
 builder.Services.AddScoped<IMemoRepository, MemoRepository>();
+builder.Services.AddScoped<IInfographicRepository, InfographicRepository>();
 
 // Azure services
 builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection("AzureBlob"));
@@ -35,10 +36,12 @@ builder.Services.AddSingleton<IQueueService, QueueService>();
 builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
 builder.Services.AddSingleton<IWhisperService, WhisperService>();
 builder.Services.AddSingleton<IMemoGeneratorService, MemoGeneratorService>();
+builder.Services.AddSingleton<IInfographicService, InfographicService>();
 
 // Workers
 builder.Services.AddHostedService<TranscriptionWorker>();
 builder.Services.AddHostedService<MemoGenerationWorker>();
+builder.Services.AddHostedService<InfographicGenerationWorker>();
 
 var host = builder.Build();
 

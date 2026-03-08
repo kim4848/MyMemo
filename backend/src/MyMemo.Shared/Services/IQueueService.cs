@@ -4,4 +4,5 @@ public interface IQueueService
 {
     Task SendTranscriptionJobAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language = "da");
     Task SendMemoGenerationJobAsync(string sessionId);
+    Task SendInfographicGenerationJobAsync(string sessionId);
 }

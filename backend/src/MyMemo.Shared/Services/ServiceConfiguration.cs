@@ -11,6 +11,7 @@ public sealed class StorageQueueOptions
     public required string ConnectionString { get; init; }
     public string TranscriptionQueueName { get; init; } = "transcription-jobs";
     public string MemoGenerationQueueName { get; init; } = "memo-generation";
+    public string InfographicGenerationQueueName { get; init; } = "infographic-generation";
 }
 
 public sealed class AzureOpenAIOptions
