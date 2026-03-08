@@ -99,11 +99,21 @@ public sealed class MemoGenerationWorker(
                 continue;
             }
 
+            const int maxDequeueCount = 5;
             var message = response.Value;
             try
             {
+                if (message.DequeueCount > maxDequeueCount)
+                {
+                    logger.LogError("Memo generation message exceeded max retries ({MaxRetries}), deleting: {MessageText}",
+                        maxDequeueCount, message.MessageText);
+                    await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
+                    continue;
+                }
+
                 var body = JsonSerializer.Deserialize<MemoJob>(message.MessageText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-                logger.LogInformation("Processing memo generation for session {SessionId}", body.SessionId);
+                logger.LogInformation("Processing memo generation for session {SessionId} (attempt {Attempt})",
+                    body.SessionId, message.DequeueCount);
 
                 using var scope = serviceProvider.CreateScope();
                 var processor = new MemoGenerationProcessor(
@@ -120,7 +130,10 @@ public sealed class MemoGenerationWorker(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Error processing memo generation message");
+                logger.LogError(ex, "Error processing memo generation message (attempt {Attempt}): {MessageText}",
+                    message.DequeueCount, message.MessageText);
+                if (message.DequeueCount >= maxDequeueCount)
+                    await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
             }
         }
     }
