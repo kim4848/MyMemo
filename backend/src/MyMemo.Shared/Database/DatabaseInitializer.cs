@@ -21,6 +21,8 @@ public static class DatabaseInitializer
             "ALTER TABLE memos ADD COLUMN generation_duration_ms INTEGER",
             "ALTER TABLE sessions ADD COLUMN memo_queued INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE sessions ADD COLUMN context TEXT",
+            "ALTER TABLE infographics ADD COLUMN image_content TEXT",
+            "ALTER TABLE infographics ADD COLUMN image_format TEXT NOT NULL DEFAULT 'png'",
         ];
         foreach (var sql in migrations)
         {

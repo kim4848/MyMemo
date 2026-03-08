@@ -1,6 +1,6 @@
 namespace MyMemo.Shared.Services;
 
-public sealed record InfographicResult(string SvgContent, string ModelUsed, int PromptTokens, int CompletionTokens);
+public sealed record InfographicResult(string ImageBase64, string ImageFormat, string ModelUsed);
 
 public interface IInfographicService
 {
