@@ -14,12 +14,15 @@ public class TranscriptionWorkerTests
     private readonly ITranscriptionRepository _transcriptions = Substitute.For<ITranscriptionRepository>();
     private readonly IBlobStorageService _blobService = Substitute.For<IBlobStorageService>();
     private readonly IWhisperService _whisperService = Substitute.For<IWhisperService>();
+    private readonly IAudioConverterService _audioConverter = Substitute.For<IAudioConverterService>();
+    private readonly ISpeechBatchTranscriptionService _speechService = Substitute.For<ISpeechBatchTranscriptionService>();
+    private readonly IBatchTranscriptionJobRepository _batchJobs = Substitute.For<IBatchTranscriptionJobRepository>();
     private readonly IMemoTriggerService _memoTrigger = Substitute.For<IMemoTriggerService>();
     private readonly TranscriptionProcessor _sut;
 
     public TranscriptionWorkerTests()
     {
-        _sut = new TranscriptionProcessor(_chunks, _transcriptions, _blobService, _whisperService, _memoTrigger, NullLogger<TranscriptionProcessor>.Instance);
+        _sut = new TranscriptionProcessor(_chunks, _transcriptions, _blobService, _whisperService, _audioConverter, _speechService, _batchJobs, _memoTrigger, NullLogger<TranscriptionProcessor>.Instance);
     }
 
     [Fact]
@@ -30,7 +33,7 @@ public class TranscriptionWorkerTests
         _whisperService.TranscribeAsync(audioStream, "da")
             .Returns(new WhisperResult("Hej med dig", 0.95, null));
 
-        await _sut.ProcessAsync("session-1", "chunk-1", 0, "path/0.webm", "da");
+        await _sut.ProcessAsync("session-1", "chunk-1", 0, "path/0.webm", "da", "whisper");
 
         await _chunks.Received(1).UpdateStatusAsync("chunk-1", "transcribing");
         await _transcriptions.Received(1).CreateAsync("chunk-1", "Hej med dig", "da", 0.95, null, Arg.Any<long?>());
@@ -45,7 +48,7 @@ public class TranscriptionWorkerTests
         _whisperService.TranscribeAsync(audioStream, "da")
             .Returns(new WhisperResult("Hej", null, null));
 
-        await _sut.ProcessAsync("session-1", "chunk-1", 0, "path/0.webm", "da");
+        await _sut.ProcessAsync("session-1", "chunk-1", 0, "path/0.webm", "da", "whisper");
 
         await _memoTrigger.Received(1).TryQueueMemoGenerationAsync("session-1");
     }
@@ -55,9 +58,29 @@ public class TranscriptionWorkerTests
     {
         _blobService.DownloadAsync("path/0.webm").Throws(new Exception("Blob not found"));
 
-        await _sut.ProcessAsync("session-1", "chunk-1", 0, "path/0.webm", "da");
+        await _sut.ProcessAsync("session-1", "chunk-1", 0, "path/0.webm", "da", "whisper");
 
         await _chunks.Received(1).UpdateStatusAsync("chunk-1", "failed", "Blob not found");
         await _memoTrigger.DidNotReceive().TryQueueMemoGenerationAsync(Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_SpeechMode_SubmitsBatchJob()
+    {
+        var audioStream = new MemoryStream(new byte[] { 1, 2, 3 });
+        _blobService.DownloadAsync("path/0.webm").Returns(audioStream);
+        _audioConverter.ConvertToWavAsync(audioStream).Returns("/tmp/test.wav");
+        _blobService.GenerateSasUrl("path/0.webm.wav", Arg.Any<TimeSpan>()).Returns(new Uri("https://example.com/sas"));
+        _speechService.SubmitAsync("https://example.com/sas", "da-DK").Returns("azure-job-123");
+
+        // Create a temp file so the cleanup doesn't fail
+        var tempPath = Path.GetTempFileName();
+        File.Move(tempPath, "/tmp/test.wav", overwrite: true);
+
+        await _sut.ProcessAsync("session-1", "chunk-1", 0, "path/0.webm", "da", "speech");
+
+        await _chunks.Received(1).UpdateStatusAsync("chunk-1", "transcribing");
+        await _batchJobs.Received(1).CreateAsync(Arg.Any<string>(), "chunk-1", "session-1", "azure-job-123");
+        await _chunks.Received(1).UpdateStatusAsync("chunk-1", "batch_submitted");
     }
 }

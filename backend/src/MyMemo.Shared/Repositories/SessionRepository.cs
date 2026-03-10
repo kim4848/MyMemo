@@ -10,22 +10,22 @@ public sealed class SessionRepository(IDbConnectionFactory db) : ISessionReposit
         """
         id AS Id, user_id AS UserId, title AS Title, status AS Status,
         output_mode AS OutputMode, audio_source AS AudioSource,
-        context AS Context, memo_queued AS MemoQueued,
+        context AS Context, transcription_mode AS TranscriptionMode, memo_queued AS MemoQueued,
         started_at AS StartedAt, ended_at AS EndedAt,
         created_at AS CreatedAt, updated_at AS UpdatedAt
         """;
 
-    public async Task<Session> CreateAsync(string userId, string outputMode, string audioSource, string? context = null)
+    public async Task<Session> CreateAsync(string userId, string outputMode, string audioSource, string? context = null, string transcriptionMode = "whisper")
     {
         using var conn = await db.CreateConnectionAsync();
         var id = Guid.NewGuid().ToString("N");
         var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
         await conn.ExecuteAsync(
             """
-            INSERT INTO sessions (id, user_id, status, output_mode, audio_source, context, started_at, created_at, updated_at)
-            VALUES (@id, @userId, 'recording', @outputMode, @audioSource, @context, @now, @now, @now)
+            INSERT INTO sessions (id, user_id, status, output_mode, audio_source, context, transcription_mode, started_at, created_at, updated_at)
+            VALUES (@id, @userId, 'recording', @outputMode, @audioSource, @context, @transcriptionMode, @now, @now, @now)
             """,
-            new { id, userId, outputMode, audioSource, context, now });
+            new { id, userId, outputMode, audioSource, context, transcriptionMode, now });
 
         return (await GetByIdAsync(id))!;
     }

@@ -14,6 +14,13 @@ public sealed class StorageQueueOptions
     public string InfographicGenerationQueueName { get; init; } = "infographic-generation";
 }
 
+public sealed class AzureSpeechOptions
+{
+    public required string Endpoint { get; init; }
+    public required string ApiKey { get; init; }
+    public string Region { get; init; } = "swedencentral";
+}
+
 public sealed class AzureOpenAIOptions
 {
     public required string Endpoint { get; init; }

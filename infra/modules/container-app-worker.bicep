@@ -33,6 +33,12 @@ param openAiEndpoint string
 @description('Azure OpenAI account name')
 param openAiAccountName string
 
+@description('Azure Speech Services endpoint')
+param speechEndpoint string
+
+@description('Azure Speech Services account name')
+param speechAccountName string
+
 resource registry 'Microsoft.ContainerRegistry/registries@2023-11-01-preview' existing = {
   name: registryName
 }
@@ -43,6 +49,10 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2023-05-01' existing 
 
 resource openAiAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
   name: openAiAccountName
+}
+
+resource speechAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
+  name: speechAccountName
 }
 
 resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
@@ -79,6 +89,10 @@ resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
           name: 'openai-key'
           value: openAiAccount.listKeys().key1
         }
+        {
+          name: 'speech-key'
+          value: speechAccount.listKeys().key1
+        }
       ]
     }
     template: {
@@ -97,6 +111,9 @@ resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'Turso__AuthToken', secretRef: 'turso-auth-token' }
             { name: 'AzureOpenAI__Endpoint', value: openAiEndpoint }
             { name: 'AzureOpenAI__ApiKey', secretRef: 'openai-key' }
+            { name: 'AzureSpeech__Endpoint', value: speechEndpoint }
+            { name: 'AzureSpeech__ApiKey', secretRef: 'speech-key' }
+            { name: 'AzureSpeech__Region', value: 'swedencentral' }
           ]
         }
       ]

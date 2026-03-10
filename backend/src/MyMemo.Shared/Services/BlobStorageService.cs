@@ -1,4 +1,5 @@
 using Azure.Storage.Blobs;
+using Azure.Storage.Sas;
 using Microsoft.Extensions.Options;
 
 namespace MyMemo.Shared.Services;
@@ -28,5 +29,12 @@ public sealed class BlobStorageService(IOptions<AzureBlobOptions> options) : IBl
         var blob = _container.GetBlobClient(blobPath);
         var response = await blob.DownloadStreamingAsync();
         return response.Value.Content;
+    }
+
+    public Uri GenerateSasUrl(string blobPath, TimeSpan expiry)
+    {
+        var blob = _container.GetBlobClient(blobPath);
+        var sasUri = blob.GenerateSasUri(BlobSasPermissions.Read, DateTimeOffset.UtcNow.Add(expiry));
+        return sasUri;
     }
 }

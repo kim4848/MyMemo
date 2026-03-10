@@ -7,7 +7,8 @@ export const outputModeLabels: Record<OutputMode, string> = {
 };
 export type AudioSource = 'microphone' | 'system' | 'both';
 export type SessionStatus = 'recording' | 'processing' | 'completed' | 'failed';
-export type ChunkStatus = 'uploaded' | 'queued' | 'transcribing' | 'transcribed' | 'failed';
+export type TranscriptionMode = 'whisper' | 'speech';
+export type ChunkStatus = 'uploaded' | 'queued' | 'transcribing' | 'transcribed' | 'batch_submitted' | 'failed';
 
 export interface Session {
   id: string;
@@ -17,6 +18,7 @@ export interface Session {
   outputMode: OutputMode;
   audioSource: AudioSource;
   context: string | null;
+  transcriptionMode: TranscriptionMode;
   startedAt: string;
   endedAt: string | null;
   createdAt: string;
@@ -68,4 +70,5 @@ export interface CreateSessionRequest {
   outputMode: OutputMode;
   audioSource: AudioSource;
   context?: string;
+  transcriptionMode?: TranscriptionMode;
 }

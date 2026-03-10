@@ -38,6 +38,7 @@ const mockDetail: SessionDetail = {
     outputMode: 'full',
     audioSource: 'microphone',
     context: null,
+    transcriptionMode: 'whisper',
     startedAt: '2026-01-15T10:00:00',
     endedAt: '2026-01-15T11:00:00',
     createdAt: '2026-01-15T10:00:00',
@@ -101,6 +102,11 @@ describe('SessionDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/completed/i)).toBeInTheDocument();
     });
+
+    // Chunks section may be collapsed when memo is present — expand it
+    const chunksHeader = screen.getByText(/chunks/i);
+    await userEvent.click(chunksHeader);
+
     expect(screen.getByText(/chunk 1/i)).toBeInTheDocument();
   });
 

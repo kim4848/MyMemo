@@ -39,7 +39,7 @@ public static class ChunkEndpoints
 
         var chunk = await chunks.CreateAsync(sessionId, chunkIndex, blobPath);
         await chunks.UpdateStatusAsync(chunk.Id, "queued");
-        await queueService.SendTranscriptionJobAsync(sessionId, chunk.Id, chunkIndex, blobPath);
+        await queueService.SendTranscriptionJobAsync(sessionId, chunk.Id, chunkIndex, blobPath, transcriptionMode: session.TranscriptionMode);
 
         return Results.Accepted($"/api/sessions/{sessionId}", chunk);
     }

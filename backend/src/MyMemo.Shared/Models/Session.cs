@@ -9,6 +9,7 @@ public sealed class Session
     public required string OutputMode { get; init; }
     public required string AudioSource { get; init; }
     public string? Context { get; init; }
+    public string TranscriptionMode { get; init; } = "whisper";
     public bool MemoQueued { get; init; }
     public required string StartedAt { get; init; }
     public string? EndedAt { get; init; }

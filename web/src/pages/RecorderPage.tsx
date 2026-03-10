@@ -17,8 +17,10 @@ export default function RecorderPage() {
     audioSource,
     outputMode,
     context,
+    transcriptionMode,
     setAudioSource,
     setOutputMode,
+    setTranscriptionMode,
     setContext,
     startRecording,
     stopRecording,
@@ -65,6 +67,24 @@ export default function RecorderPage() {
               onAudioSourceChange={setAudioSource}
               onOutputModeChange={setOutputMode}
             />
+          </div>
+          <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  checked={transcriptionMode === 'speech'}
+                  onChange={(e) => setTranscriptionMode(e.target.checked ? 'speech' : 'whisper')}
+                  className="peer sr-only"
+                />
+                <div className="h-6 w-11 rounded-full bg-navy-600 peer-checked:bg-accent transition-colors" />
+                <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
+              </div>
+              <div>
+                <span className="text-sm font-medium text-gray-200">Med taleridentifikation</span>
+                <p className="text-xs text-gray-500">Identificerer hvem der taler (bedst til møder med flere deltagere)</p>
+              </div>
+            </label>
           </div>
           <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
             <label className="mb-2 block text-sm font-medium text-gray-400">

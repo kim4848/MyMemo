@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { api } from '../api/client';
 import { AudioCaptureService } from '../services/audio';
 import { ChunkCache } from '../services/chunk-cache';
-import type { AudioSource, OutputMode } from '../types';
+import type { AudioSource, OutputMode, TranscriptionMode } from '../types';
 
 export type LocalChunkStatus =
   | 'pending'
@@ -24,10 +24,12 @@ interface RecorderState {
   elapsedMs: number;
   audioSource: AudioSource;
   outputMode: OutputMode;
+  transcriptionMode: TranscriptionMode;
   context: string;
 
   setAudioSource: (source: AudioSource) => void;
   setOutputMode: (mode: OutputMode) => void;
+  setTranscriptionMode: (mode: TranscriptionMode) => void;
   setContext: (context: string) => void;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
@@ -58,16 +60,18 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
   elapsedMs: 0,
   audioSource: 'microphone',
   outputMode: 'full',
+  transcriptionMode: 'whisper',
   context: '',
 
   setAudioSource: (audioSource) => set({ audioSource }),
   setOutputMode: (outputMode) => set({ outputMode }),
+  setTranscriptionMode: (transcriptionMode) => set({ transcriptionMode }),
   setContext: (context) => set({ context }),
 
   startRecording: async () => {
-    const { audioSource, outputMode, context } = get();
+    const { audioSource, outputMode, transcriptionMode, context } = get();
 
-    const session = await api.sessions.create({ outputMode, audioSource, ...(context ? { context } : {}) });
+    const session = await api.sessions.create({ outputMode, audioSource, ...(context ? { context } : {}), transcriptionMode });
     set({ sessionId: session.id, status: 'recording', chunks: [] });
 
     audioService = new AudioCaptureService();

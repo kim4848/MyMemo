@@ -12,10 +12,25 @@ public sealed class TranscriptionProcessor(
     ITranscriptionRepository transcriptions,
     IBlobStorageService blobService,
     IWhisperService whisperService,
+    IAudioConverterService audioConverter,
+    ISpeechBatchTranscriptionService speechService,
+    IBatchTranscriptionJobRepository batchJobs,
     IMemoTriggerService memoTrigger,
     ILogger<TranscriptionProcessor> logger)
 {
-    public async Task ProcessAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language)
+    public async Task ProcessAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language, string transcriptionMode)
+    {
+        if (transcriptionMode == "speech")
+        {
+            await ProcessSpeechAsync(sessionId, chunkId, chunkIndex, blobPath, language);
+        }
+        else
+        {
+            await ProcessWhisperAsync(sessionId, chunkId, chunkIndex, blobPath, language);
+        }
+    }
+
+    private async Task ProcessWhisperAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language)
     {
         try
         {
@@ -33,9 +48,58 @@ public sealed class TranscriptionProcessor(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Transcription failed for session {SessionId}, chunk {ChunkIndex} ({ChunkId})",
+            logger.LogError(ex, "Whisper transcription failed for session {SessionId}, chunk {ChunkIndex} ({ChunkId})",
                 sessionId, chunkIndex, chunkId);
             await chunks.UpdateStatusAsync(chunkId, "failed", ex.Message);
+        }
+    }
+
+    private async Task ProcessSpeechAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language)
+    {
+        string? tempWavPath = null;
+        try
+        {
+            await chunks.UpdateStatusAsync(chunkId, "transcribing");
+
+            // 1. Download WebM from blob
+            await using var audioStream = await blobService.DownloadAsync(blobPath);
+
+            // 2. Convert to WAV via ffmpeg
+            tempWavPath = await audioConverter.ConvertToWavAsync(audioStream);
+
+            // 3. Upload WAV to blob
+            var wavBlobPath = $"{blobPath}.wav";
+            await using (var wavStream = File.OpenRead(tempWavPath))
+                await blobService.UploadAsync(wavBlobPath, wavStream, "audio/wav");
+
+            // 4. Generate SAS URL for WAV blob (24h expiry)
+            var sasUrl = blobService.GenerateSasUrl(wavBlobPath, TimeSpan.FromHours(24));
+
+            // 5. Submit to Azure Speech batch transcription
+            var locale = language == "da" ? "da-DK" : language;
+            var azureJobId = await speechService.SubmitAsync(sasUrl.ToString(), locale);
+
+            // 6. Store batch job record
+            var jobId = Guid.NewGuid().ToString("N");
+            await batchJobs.CreateAsync(jobId, chunkId, sessionId, azureJobId);
+
+            // 7. Update chunk status
+            await chunks.UpdateStatusAsync(chunkId, "batch_submitted");
+
+            logger.LogInformation("Submitted batch transcription for session {SessionId}, chunk {ChunkIndex}, Azure job {AzureJobId}",
+                sessionId, chunkIndex, azureJobId);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Speech batch submission failed for session {SessionId}, chunk {ChunkIndex} ({ChunkId})",
+                sessionId, chunkIndex, chunkId);
+            await chunks.UpdateStatusAsync(chunkId, "failed", ex.Message);
+        }
+        finally
+        {
+            // 8. Delete temp WAV file
+            if (tempWavPath != null && File.Exists(tempWavPath))
+                File.Delete(tempWavPath);
         }
     }
 }
@@ -81,8 +145,8 @@ public sealed class TranscriptionWorker(
             }
 
             var body = JsonSerializer.Deserialize<TranscriptionJob>(message.MessageText, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
-            logger.LogInformation("Processing transcription for session {SessionId}, chunk {ChunkIndex} (attempt {Attempt})",
-                body.SessionId, body.ChunkIndex, message.DequeueCount);
+            logger.LogInformation("Processing transcription for session {SessionId}, chunk {ChunkIndex} (attempt {Attempt}, mode {Mode})",
+                body.SessionId, body.ChunkIndex, message.DequeueCount, body.TranscriptionMode);
 
             using var scope = serviceProvider.CreateScope();
             var processor = new TranscriptionProcessor(
@@ -90,10 +154,13 @@ public sealed class TranscriptionWorker(
                 scope.ServiceProvider.GetRequiredService<ITranscriptionRepository>(),
                 scope.ServiceProvider.GetRequiredService<IBlobStorageService>(),
                 scope.ServiceProvider.GetRequiredService<IWhisperService>(),
+                scope.ServiceProvider.GetRequiredService<IAudioConverterService>(),
+                scope.ServiceProvider.GetRequiredService<ISpeechBatchTranscriptionService>(),
+                scope.ServiceProvider.GetRequiredService<IBatchTranscriptionJobRepository>(),
                 scope.ServiceProvider.GetRequiredService<IMemoTriggerService>(),
                 scope.ServiceProvider.GetRequiredService<ILogger<TranscriptionProcessor>>());
 
-            await processor.ProcessAsync(body.SessionId, body.ChunkId, body.ChunkIndex, body.BlobPath, body.Language);
+            await processor.ProcessAsync(body.SessionId, body.ChunkId, body.ChunkIndex, body.BlobPath, body.Language, body.TranscriptionMode);
             await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);
         }
         catch (Exception ex)
@@ -105,5 +172,5 @@ public sealed class TranscriptionWorker(
         }
     }
 
-    private sealed record TranscriptionJob(string SessionId, string ChunkId, int ChunkIndex, string BlobPath, string Language);
+    private sealed record TranscriptionJob(string SessionId, string ChunkId, int ChunkIndex, string BlobPath, string Language, string TranscriptionMode = "whisper");
 }
