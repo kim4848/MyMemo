@@ -36,8 +36,22 @@ public sealed class InfographicService : IInfographicService
         };
 
         var result = await imageClient.GenerateImageAsync(prompt, options);
-        var imageUri = result.Value.ImageUri;
-        var imageBytes = await s_httpClient.GetByteArrayAsync(imageUri);
+        var image = result.Value;
+
+        byte[] imageBytes;
+        if (image.ImageUri is not null)
+        {
+            imageBytes = await s_httpClient.GetByteArrayAsync(image.ImageUri);
+        }
+        else if (image.ImageBytes is not null)
+        {
+            imageBytes = image.ImageBytes.ToArray();
+        }
+        else
+        {
+            throw new InvalidOperationException("Image generation returned neither a URI nor binary data.");
+        }
+
         var base64 = Convert.ToBase64String(imageBytes);
 
         return new InfographicResult(

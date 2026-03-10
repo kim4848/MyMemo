@@ -53,7 +53,7 @@ public sealed class InfographicGenerationProcessor(
                 return true;
 
             logger.LogError(ex, "Infographic generation failed for session {SessionId}", sessionId);
-            return true;
+            return false;
         }
     }
 }
