@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS memos (
 CREATE TABLE IF NOT EXISTS infographics (
     id                     TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
     session_id             TEXT NOT NULL UNIQUE REFERENCES sessions(id) ON DELETE CASCADE,
-    svg_content            TEXT NOT NULL,
+    image_content          TEXT NOT NULL,
     model_used             TEXT NOT NULL,
     prompt_tokens          INTEGER,
     completion_tokens      INTEGER,

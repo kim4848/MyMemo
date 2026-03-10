@@ -36,7 +36,7 @@ public sealed class InfographicGenerationProcessor(
 
             await infographics.CreateAsync(
                 sessionId,
-                result.SvgContent,
+                result.ImageBase64,
                 result.ModelUsed,
                 result.PromptTokens,
                 result.CompletionTokens,
