@@ -32,7 +32,7 @@ public sealed class InfographicService : IInfographicService
         var options = new ImageGenerationOptions
         {
             Size = GeneratedImageSize.W1024xH1792,
-            Quality = GeneratedImageQuality.High,
+            Quality = new GeneratedImageQuality("high"),
         };
 
         var result = await imageClient.GenerateImageAsync(prompt, options);
