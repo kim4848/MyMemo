@@ -4,6 +4,8 @@ import { api, setTokenProvider, ApiError } from './client';
 const mockFetch = vi.fn();
 vi.stubGlobal('fetch', mockFetch);
 
+const jsonHeaders = { get: (name: string) => name === 'content-type' ? 'application/json' : null };
+
 beforeEach(() => {
   mockFetch.mockReset();
   setTokenProvider(() => Promise.resolve('test-token'));
@@ -15,6 +17,7 @@ describe('api.sessions', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 201,
+      headers: jsonHeaders,
       json: () => Promise.resolve(session),
     });
 
@@ -41,6 +44,7 @@ describe('api.sessions', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
+      headers: jsonHeaders,
       json: () => Promise.resolve(sessions),
     });
 
@@ -53,6 +57,7 @@ describe('api.sessions', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
+      headers: jsonHeaders,
       json: () => Promise.resolve(detail),
     });
 
@@ -81,6 +86,7 @@ describe('api.chunks', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 202,
+      headers: jsonHeaders,
       json: () => Promise.resolve(chunk),
     });
 
@@ -111,6 +117,7 @@ describe('api.memos', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
+      headers: jsonHeaders,
       json: () => Promise.resolve(memo),
     });
 
@@ -138,6 +145,7 @@ describe('error handling', () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 200,
+      headers: jsonHeaders,
       json: () => Promise.resolve([]),
     });
 

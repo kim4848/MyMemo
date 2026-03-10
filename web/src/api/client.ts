@@ -55,6 +55,15 @@ async function request<T>(
   }
 
   if (noContent || res.status === 204) return undefined as T;
+
+  const contentType = res.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) {
+    throw new ApiError(
+      res.status,
+      'Expected JSON response from API but received HTML. Is the API server running?',
+    );
+  }
+
   return res.json();
 }
 
