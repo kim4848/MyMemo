@@ -128,6 +128,7 @@ describe('recorder store', () => {
     expect(api.sessions.create).toHaveBeenCalledWith({
       outputMode: 'full',
       audioSource: 'microphone',
+      transcriptionMode: 'whisper',
     });
     expect(useRecorderStore.getState().status).toBe('recording');
     expect(useRecorderStore.getState().sessionId).toBe('sess-1');
@@ -143,6 +144,7 @@ describe('recorder store', () => {
       outputMode: 'full',
       audioSource: 'microphone',
       context: 'Møde med København',
+      transcriptionMode: 'whisper',
     });
   });
 

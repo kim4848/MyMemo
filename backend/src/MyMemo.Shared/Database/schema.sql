@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS sessions (
     output_mode  TEXT NOT NULL DEFAULT 'full',
     audio_source TEXT NOT NULL DEFAULT 'microphone',
     context      TEXT,
+    transcription_mode TEXT NOT NULL DEFAULT 'whisper',
     memo_queued  INTEGER NOT NULL DEFAULT 0,
     started_at   TEXT NOT NULL DEFAULT (datetime('now')),
     ended_at     TEXT,
@@ -60,6 +61,16 @@ CREATE TABLE IF NOT EXISTS memos (
     completion_tokens     INTEGER,
     generation_duration_ms INTEGER,
     created_at            TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS batch_transcription_jobs (
+    id            TEXT PRIMARY KEY,
+    chunk_id      TEXT NOT NULL,
+    session_id    TEXT NOT NULL,
+    azure_job_id  TEXT NOT NULL,
+    status        TEXT NOT NULL DEFAULT 'submitted',
+    created_at    TEXT NOT NULL,
+    completed_at  TEXT
 );
 
 CREATE TABLE IF NOT EXISTS infographics (

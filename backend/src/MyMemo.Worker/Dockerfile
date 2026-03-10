@@ -9,6 +9,7 @@ COPY src/ src/
 RUN dotnet publish "src/MyMemo.Worker/MyMemo.Worker.csproj" -c Release -r linux-musl-x64 --self-contained -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine
+RUN apk add --no-cache ffmpeg
 WORKDIR /app
 COPY --from=build /app/publish .
 ENTRYPOINT ["./MyMemo.Worker"]

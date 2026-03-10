@@ -26,22 +26,27 @@ builder.Services.AddScoped<IChunkRepository, ChunkRepository>();
 builder.Services.AddScoped<ITranscriptionRepository, TranscriptionRepository>();
 builder.Services.AddScoped<IMemoRepository, MemoRepository>();
 builder.Services.AddScoped<IInfographicRepository, InfographicRepository>();
+builder.Services.AddScoped<IBatchTranscriptionJobRepository, BatchTranscriptionJobRepository>();
 
 // Azure services
 builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection("AzureBlob"));
 builder.Services.Configure<StorageQueueOptions>(builder.Configuration.GetSection("StorageQueue"));
 builder.Services.Configure<AzureOpenAIOptions>(builder.Configuration.GetSection("AzureOpenAI"));
+builder.Services.Configure<AzureSpeechOptions>(builder.Configuration.GetSection("AzureSpeech"));
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 builder.Services.AddSingleton<IQueueService, QueueService>();
 builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
 builder.Services.AddSingleton<IWhisperService, WhisperService>();
 builder.Services.AddSingleton<IMemoGeneratorService, MemoGeneratorService>();
 builder.Services.AddSingleton<IInfographicService, InfographicService>();
+builder.Services.AddSingleton<IAudioConverterService, AudioConverterService>();
+builder.Services.AddSingleton<ISpeechBatchTranscriptionService, SpeechBatchTranscriptionService>();
 
 // Workers
 builder.Services.AddHostedService<TranscriptionWorker>();
 builder.Services.AddHostedService<MemoGenerationWorker>();
 builder.Services.AddHostedService<InfographicGenerationWorker>();
+builder.Services.AddHostedService<BatchTranscriptionPollWorker>();
 
 var host = builder.Build();
 

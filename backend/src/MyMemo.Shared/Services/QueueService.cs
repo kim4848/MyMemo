@@ -28,10 +28,10 @@ public sealed class QueueService : IQueueService
         _ensured = true;
     }
 
-    public async Task SendTranscriptionJobAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language = "da")
+    public async Task SendTranscriptionJobAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language = "da", string transcriptionMode = "whisper")
     {
         await EnsureQueuesAsync();
-        var body = JsonSerializer.Serialize(new { sessionId, chunkId, chunkIndex, blobPath, language });
+        var body = JsonSerializer.Serialize(new { sessionId, chunkId, chunkIndex, blobPath, language, transcriptionMode });
         await _transcriptionQueue.SendMessageAsync(body);
     }
 

@@ -67,6 +67,15 @@ module openAi 'modules/openai.bicep' = {
   }
 }
 
+// --- Azure Speech Services ---
+module speech 'modules/speech.bicep' = {
+  name: 'speech'
+  params: {
+    location: openAiLocation
+    speechAccountName: '${environmentName}-speech'
+  }
+}
+
 // --- Container Apps Environment ---
 module containerAppsEnv 'modules/container-apps-env.bicep' = {
   name: 'container-apps-env'
@@ -111,6 +120,8 @@ module workerApp 'modules/container-app-worker.bicep' = {
     tursoAuthToken: tursoAuthToken
     openAiEndpoint: openAi.outputs.endpoint
     openAiAccountName: openAi.outputs.accountName
+    speechEndpoint: speech.outputs.endpoint
+    speechAccountName: speech.outputs.accountName
   }
 }
 
@@ -126,3 +137,6 @@ output storageAccountName string = storage.outputs.accountName
 
 @description('Azure OpenAI endpoint')
 output openAiEndpoint string = openAi.outputs.endpoint
+
+@description('Azure Speech Services endpoint')
+output speechEndpoint string = speech.outputs.endpoint

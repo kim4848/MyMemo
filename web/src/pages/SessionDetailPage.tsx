@@ -9,6 +9,7 @@ const chunkStatusStyles: Record<ChunkStatus, string> = {
   uploaded: 'text-gray-500',
   queued: 'text-gray-500',
   transcribing: 'text-blue-400',
+  batch_submitted: 'text-blue-400',
   transcribed: 'text-accent',
   failed: 'text-red-400',
 };
@@ -132,6 +133,11 @@ export default function SessionDetailPage() {
 
       <div className="text-sm text-gray-500">
         {outputModeLabels[session.outputMode]} &middot; {session.audioSource}
+        {session.transcriptionMode === 'speech' && (
+          <span className="ml-2 inline-flex items-center rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-medium text-blue-400">
+            Med taleridentifikation
+          </span>
+        )}
       </div>
 
       {session.context && (
@@ -198,7 +204,7 @@ export default function SessionDetailPage() {
                   <span className={`font-medium transition-colors duration-300 ${chunkStatusStyles[chunk.status]}`}>
                     Chunk {chunk.chunkIndex + 1}
                   </span>
-                  <span className="transition-colors duration-300 text-gray-600">{chunk.status}</span>
+                  <span className="transition-colors duration-300 text-gray-600">{chunk.status === 'batch_submitted' ? 'processing' : chunk.status}</span>
                   {detail.transcriptionDurations[chunk.id] != null && (
                     <span className="text-gray-600">
                       ({detail.transcriptionDurations[chunk.id] >= 1000
