@@ -114,14 +114,14 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
         // Simulate worker having created the infographic
         using var conn = await _dbFactory.CreateConnectionAsync();
         await Dapper.SqlMapper.ExecuteAsync(conn,
-            "INSERT INTO infographics (id, session_id, svg_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, '<svg>infographic</svg>', 'gpt-5.3-chat', 150, 600, @now)",
+            "INSERT INTO infographics (id, session_id, image_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, 'dGVzdGluZm9ncmFwaGlj', 'gpt-5.3-chat', 150, 600, @now)",
             new { id = Guid.NewGuid().ToString("N"), sessionId, now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") });
 
         var response = await _client.GetAsync($"/api/sessions/{sessionId}/infographic");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var infographic = await response.Content.ReadFromJsonAsync<InfographicResponse>();
-        infographic!.SvgContent.Should().Be("<svg>infographic</svg>");
+        infographic!.ImageContent.Should().Be("dGVzdGluZm9ncmFwaGlj");
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
         // Simulate worker having created the infographic
         using var conn = await _dbFactory.CreateConnectionAsync();
         await Dapper.SqlMapper.ExecuteAsync(conn,
-            "INSERT INTO infographics (id, session_id, svg_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, '<svg>del</svg>', 'gpt-5.3-chat', 100, 400, @now)",
+            "INSERT INTO infographics (id, session_id, image_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, 'ZGVs', 'gpt-5.3-chat', 100, 400, @now)",
             new { id = Guid.NewGuid().ToString("N"), sessionId, now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") });
 
         var response = await _client.DeleteAsync($"/api/sessions/{sessionId}/infographic");
@@ -151,7 +151,7 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
         // Simulate existing infographic
         using var conn = await _dbFactory.CreateConnectionAsync();
         await Dapper.SqlMapper.ExecuteAsync(conn,
-            "INSERT INTO infographics (id, session_id, svg_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, '<svg>first</svg>', 'gpt-5.3-chat', 100, 400, @now)",
+            "INSERT INTO infographics (id, session_id, image_content, model_used, prompt_tokens, completion_tokens, created_at) VALUES (@id, @sessionId, 'Zmlyc3Q=', 'gpt-5.3-chat', 100, 400, @now)",
             new { id = Guid.NewGuid().ToString("N"), sessionId, now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") });
 
         var response = await _client.PostAsync($"/api/sessions/{sessionId}/infographic", null);
@@ -166,5 +166,5 @@ public class InfographicEndpointsTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     private sealed record SessionIdResponse(string Id);
-    private sealed record InfographicResponse(string Id, string SessionId, string SvgContent, string ModelUsed);
+    private sealed record InfographicResponse(string Id, string SessionId, string ImageContent, string ModelUsed);
 }

@@ -28,13 +28,13 @@ public class InfographicRepositoryTests : IDisposable
     public async Task CreateAsync_StoresInfographic()
     {
         var sessionId = await CreateTestSession();
-        await _sut.CreateAsync(sessionId, "<svg></svg>", "gpt-5.3-chat", 200, 800, 5000);
+        await _sut.CreateAsync(sessionId, "dGVzdA==", "gpt-image-1.5", 200, 800, 5000);
 
         var infographic = await _sut.GetBySessionIdAsync(sessionId);
         infographic.Should().NotBeNull();
         infographic!.SessionId.Should().Be(sessionId);
-        infographic.SvgContent.Should().Be("<svg></svg>");
-        infographic.ModelUsed.Should().Be("gpt-5.3-chat");
+        infographic.ImageContent.Should().Be("dGVzdA==");
+        infographic.ModelUsed.Should().Be("gpt-image-1.5");
         infographic.PromptTokens.Should().Be(200);
         infographic.CompletionTokens.Should().Be(800);
         infographic.GenerationDurationMs.Should().Be(5000);
@@ -54,7 +54,7 @@ public class InfographicRepositoryTests : IDisposable
     public async Task DeleteBySessionIdAsync_RemovesInfographic()
     {
         var sessionId = await CreateTestSession();
-        await _sut.CreateAsync(sessionId, "<svg></svg>", "gpt-5.3-chat", 200, 800, 5000);
+        await _sut.CreateAsync(sessionId, "dGVzdA==", "gpt-image-1.5", 200, 800, 5000);
 
         var before = await _sut.GetBySessionIdAsync(sessionId);
         before.Should().NotBeNull();
@@ -81,7 +81,7 @@ public class InfographicRepositoryTests : IDisposable
     public async Task CreateAsync_StoresGenerationDuration()
     {
         var sessionId = await CreateTestSession();
-        await _sut.CreateAsync(sessionId, "<svg>test</svg>", "gpt-5.3-chat", 100, 50, 7500);
+        await _sut.CreateAsync(sessionId, "aW1hZ2U=", "gpt-image-1.5", 100, 50, 7500);
 
         var infographic = await _sut.GetBySessionIdAsync(sessionId);
         infographic.Should().NotBeNull();

@@ -1,104 +1,78 @@
 using System.ClientModel;
-using System.Text;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.Options;
-using OpenAI.Chat;
+using OpenAI.Images;
 
 namespace MyMemo.Shared.Services;
 
 public sealed class InfographicService : IInfographicService
 {
-    private readonly Lazy<ChatClient> _chatClient;
-    private readonly string _gptDeployment;
+    private readonly Lazy<ImageClient> _imageClient;
+    private readonly string _imageDeployment;
 
     public InfographicService(IOptions<AzureOpenAIOptions> options)
     {
-        _gptDeployment = options.Value.GptDeployment;
-        _chatClient = new Lazy<ChatClient>(() =>
+        _imageDeployment = options.Value.ImageDeployment;
+        _imageClient = new Lazy<ImageClient>(() =>
         {
             var credential = new ApiKeyCredential(options.Value.ApiKey);
             var client = new AzureOpenAIClient(new Uri(options.Value.Endpoint), credential);
-            return client.GetChatClient(options.Value.GptDeployment);
+            return client.GetImageClient(options.Value.ImageDeployment);
         });
     }
 
-    private const string SystemPrompt = """
-        You are a professional infographic designer. Given memo content from a meeting transcription,
-        generate a visually appealing SVG infographic that presents the key information.
-
-        CRITICAL SVG REQUIREMENTS:
-        - Output ONLY valid SVG markup, nothing else — no markdown, no code fences, no explanation
-        - The SVG must start with <svg and end with </svg>
-        - Use viewBox="0 0 800 1100" for a portrait layout
-        - Use width="800" height="1100"
-        - Use a clean, modern design with a white (#FFFFFF) background
-        - Use a professional color palette: primary (#2563EB), secondary (#7C3AED), accent (#059669), dark (#1E293B), muted (#64748B)
-        - Include a title section at the top with large bold text
-        - Use rounded rectangles (rx="12") as card containers for sections
-        - Use clear visual hierarchy with font sizes: title 28px, section headers 18px, body text 14px
-        - Use the font-family="Inter, system-ui, sans-serif"
-        - Include simple geometric icons/shapes to represent concepts (circles, arrows, checkmarks)
-        - Wrap long text using multiple <tspan> elements with dy="1.3em" and appropriate x positioning
-        - Each line of text should be max ~60 characters wide
-        - Leave comfortable padding (20px) inside card containers
-        - Space sections vertically with 16-20px gaps
-
-        CONTENT EXTRACTION:
-        - For "summary" memos: highlight key points, decisions, action items, and next steps
-        - For "full" memos: extract main topics, key quotes, and structure into digestible sections
-        - For "product-planning" memos: show features, priorities (must-have vs nice-to-have), risks, and next steps
-        - Always include a header with the memo title/topic
-        - Use bullet points (• character) for lists
-        - Maximum 6-8 content sections to keep it readable
-        - Write all content in the same language as the memo (typically Danish)
-        """;
-
     public async Task<InfographicResult> GenerateAsync(string memoContent, string outputMode)
     {
-        var chatClient = _chatClient.Value;
+        var imageClient = _imageClient.Value;
 
-        var userPrompt = $"Create an infographic for this {outputMode} memo:\n\n{memoContent}";
+        var prompt = BuildPrompt(memoContent, outputMode);
 
-        ChatMessage[] messages =
-        [
-            new SystemChatMessage(SystemPrompt),
-            new UserChatMessage(userPrompt)
-        ];
-
-        var contentBuilder = new StringBuilder();
-        int promptTokens = 0;
-        int completionTokens = 0;
-
-        await foreach (var update in chatClient.CompleteChatStreamingAsync(messages))
+        var options = new ImageGenerationOptions
         {
-            foreach (var part in update.ContentUpdate)
-            {
-                contentBuilder.Append(part.Text);
-            }
+            Size = GeneratedImageSize.W1024xH1792,
+            ResponseFormat = GeneratedImageFormat.Bytes,
+            Quality = GeneratedImageQuality.High,
+        };
 
-            if (update.Usage is not null)
-            {
-                promptTokens = update.Usage.InputTokenCount;
-                completionTokens = update.Usage.OutputTokenCount;
-            }
-        }
-
-        var svg = contentBuilder.ToString().Trim();
-
-        // Strip any markdown code fences if the model wraps the SVG
-        if (svg.StartsWith("```"))
-        {
-            var firstNewline = svg.IndexOf('\n');
-            if (firstNewline >= 0)
-                svg = svg[(firstNewline + 1)..];
-            if (svg.EndsWith("```"))
-                svg = svg[..^3].TrimEnd();
-        }
+        var result = await imageClient.GenerateImageAsync(prompt, options);
+        var imageBytes = result.Value.ImageBytes;
+        var base64 = Convert.ToBase64String(imageBytes.ToArray());
 
         return new InfographicResult(
-            SvgContent: svg,
-            ModelUsed: _gptDeployment,
-            PromptTokens: promptTokens,
-            CompletionTokens: completionTokens);
+            ImageBase64: base64,
+            ModelUsed: _imageDeployment,
+            PromptTokens: null,
+            CompletionTokens: null);
+    }
+
+    private static string BuildPrompt(string memoContent, string outputMode)
+    {
+        var contentGuidance = outputMode switch
+        {
+            "summary" => "Highlight key points, decisions, action items, and next steps.",
+            "product-planning" => "Show features, priorities (must-have vs nice-to-have), risks, and next steps.",
+            _ => "Extract main topics, key quotes, and structure into digestible sections."
+        };
+
+        return $"""
+            Create a professional, visually appealing infographic in portrait layout based on the following meeting memo.
+
+            DESIGN REQUIREMENTS:
+            - Clean, modern corporate design with a white background
+            - Professional color palette: primary blue (#2563EB), purple (#7C3AED), green accent (#059669), dark text (#1E293B)
+            - Clear visual hierarchy with a bold title at the top
+            - Use card-like sections with rounded corners for each topic
+            - Include simple geometric icons/shapes to represent concepts
+            - Use bullet points for lists
+            - Maximum 6-8 content sections to keep it readable
+            - All text must be clearly legible
+            - Write all content in the same language as the memo (typically Danish)
+
+            CONTENT GUIDANCE:
+            {contentGuidance}
+
+            MEMO CONTENT:
+            {memoContent}
+            """;
     }
 }
