@@ -23,6 +23,8 @@ public static class DatabaseInitializer
             "ALTER TABLE sessions ADD COLUMN context TEXT",
             "ALTER TABLE infographics ADD COLUMN image_content TEXT",
             "ALTER TABLE sessions ADD COLUMN transcription_mode TEXT NOT NULL DEFAULT 'whisper'",
+            "UPDATE infographics SET image_content = svg_content WHERE image_content IS NULL AND svg_content IS NOT NULL",
+            "ALTER TABLE infographics DROP COLUMN svg_content",
         ];
         foreach (var sql in migrations)
         {
