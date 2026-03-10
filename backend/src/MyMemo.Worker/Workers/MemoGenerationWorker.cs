@@ -1,3 +1,4 @@
+using System.ClientModel;
 using System.Diagnostics;
 using System.Text.Json;
 using Azure.Storage.Queues;
@@ -61,6 +62,13 @@ public sealed class MemoGenerationProcessor(
 
             await memos.CreateAsync(sessionId, session.OutputMode, result.Content, result.ModelUsed, result.PromptTokens, result.CompletionTokens, sw.ElapsedMilliseconds);
             await sessions.UpdateStatusAsync(sessionId, "completed");
+            return true;
+        }
+        catch (ClientResultException ex) when (ex.Message.Contains("content management policy", StringComparison.OrdinalIgnoreCase)
+                                             || ex.Message.Contains("content_filter", StringComparison.OrdinalIgnoreCase))
+        {
+            logger.LogWarning("Memo generation blocked by content filter for session {SessionId}, will not retry", sessionId);
+            await sessions.UpdateStatusAsync(sessionId, "failed");
             return true;
         }
         catch (Exception ex)
