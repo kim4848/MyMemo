@@ -2,6 +2,7 @@ using System.ClientModel;
 using Azure.AI.OpenAI;
 using Microsoft.Extensions.Options;
 using OpenAI.Images;
+using System.Net.Http;
 
 namespace MyMemo.Shared.Services;
 
@@ -9,6 +10,7 @@ public sealed class InfographicService : IInfographicService
 {
     private readonly Lazy<ImageClient> _imageClient;
     private readonly string _imageDeployment;
+    private static readonly HttpClient s_httpClient = new();
 
     public InfographicService(IOptions<AzureOpenAIOptions> options)
     {
@@ -30,13 +32,13 @@ public sealed class InfographicService : IInfographicService
         var options = new ImageGenerationOptions
         {
             Size = GeneratedImageSize.W1024xH1792,
-            ResponseFormat = GeneratedImageFormat.Bytes,
             Quality = GeneratedImageQuality.High,
         };
 
         var result = await imageClient.GenerateImageAsync(prompt, options);
-        var imageBytes = result.Value.ImageBytes;
-        var base64 = Convert.ToBase64String(imageBytes.ToArray());
+        var imageUri = result.Value.ImageUri;
+        var imageBytes = await s_httpClient.GetByteArrayAsync(imageUri);
+        var base64 = Convert.ToBase64String(imageBytes);
 
         return new InfographicResult(
             ImageBase64: base64,
