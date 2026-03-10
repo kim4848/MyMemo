@@ -194,6 +194,7 @@ describe('SessionDetailPage', () => {
   });
 
   test('shows context when session has context', async () => {
+    const user = userEvent.setup();
     vi.mocked(api.sessions.get).mockResolvedValue({
       ...mockDetail,
       session: { ...mockDetail.session, context: 'Møde med København' },
@@ -205,9 +206,10 @@ describe('SessionDetailPage', () => {
     await waitFor(() => {
       expect(screen.getByText(/kontekst/i)).toBeInTheDocument();
     });
-    // Context is displayed in the read-only section
-    const contextSection = screen.getByText(/kontekst/i).closest('div');
-    expect(contextSection).toHaveTextContent('Møde med København');
+    // Context section is collapsed when memo is loaded — expand it
+    await user.click(screen.getByText(/kontekst/i));
+    const contextParagraph = screen.getByText('Møde med København', { selector: 'p' });
+    expect(contextParagraph).toBeInTheDocument();
   });
 
   test('shows retry button when session is failed and no memo', async () => {
