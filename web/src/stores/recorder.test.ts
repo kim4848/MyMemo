@@ -56,6 +56,7 @@ const sessionStub = {
   status: 'recording' as const,
   outputMode: 'full' as const,
   audioSource: 'microphone' as const,
+  transcriptionMode: 'whisper' as const,
   context: null,
   startedAt: '2026-01-01T00:00:00',
   endedAt: null,
