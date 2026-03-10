@@ -31,7 +31,7 @@ public sealed class InfographicService : IInfographicService
 
         var options = new ImageGenerationOptions
         {
-            Size = GeneratedImageSize.W1024xH1792,
+            Size = new GeneratedImageSize("1024x1536"),
             Quality = new GeneratedImageQuality("high"),
         };
 
