@@ -55,7 +55,7 @@ public sealed class BatchTranscriptionPollWorker(
                         await HandleFailedAsync(scope.ServiceProvider, job.Id, job.ChunkId, job.AzureJobId);
                         break;
                     default:
-                        logger.LogDebug("Batch job {AzureJobId} still {Status}", job.AzureJobId, status);
+                        logger.LogInformation("Batch job {AzureJobId} still {Status}", job.AzureJobId, status);
                         break;
                 }
             }
