@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS transcriptions (
     confidence                REAL,
     word_timestamps           TEXT,
     transcription_duration_ms INTEGER,
+    transcription_provider    TEXT DEFAULT 'whisper',
     created_at                TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

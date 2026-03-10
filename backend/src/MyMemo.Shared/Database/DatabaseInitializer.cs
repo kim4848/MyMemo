@@ -22,6 +22,7 @@ public static class DatabaseInitializer
             "ALTER TABLE sessions ADD COLUMN memo_queued INTEGER NOT NULL DEFAULT 0",
             "ALTER TABLE sessions ADD COLUMN context TEXT",
             "ALTER TABLE infographics ADD COLUMN image_content TEXT",
+            "ALTER TABLE transcriptions ADD COLUMN transcription_provider TEXT DEFAULT 'whisper'",
         ];
         foreach (var sql in migrations)
         {

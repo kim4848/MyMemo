@@ -31,10 +31,23 @@ builder.Services.AddScoped<IInfographicRepository, InfographicRepository>();
 builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection("AzureBlob"));
 builder.Services.Configure<StorageQueueOptions>(builder.Configuration.GetSection("StorageQueue"));
 builder.Services.Configure<AzureOpenAIOptions>(builder.Configuration.GetSection("AzureOpenAI"));
+builder.Services.Configure<AzureSpeechOptions>(builder.Configuration.GetSection("AzureSpeech"));
+builder.Services.Configure<TranscriptionOptions>(builder.Configuration.GetSection("Transcription"));
 builder.Services.AddSingleton<IBlobStorageService, BlobStorageService>();
 builder.Services.AddSingleton<IQueueService, QueueService>();
 builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
-builder.Services.AddSingleton<IWhisperService, WhisperService>();
+
+// Feature toggle: select transcription provider based on config
+var transcriptionProvider = builder.Configuration.GetValue<string>("Transcription:Provider") ?? "whisper";
+if (transcriptionProvider == "azure-fast")
+{
+    builder.Services.AddHttpClient<IWhisperService, AzureFastTranscriptionService>();
+}
+else
+{
+    builder.Services.AddSingleton<IWhisperService, WhisperService>();
+}
+
 builder.Services.AddSingleton<IMemoGeneratorService, MemoGeneratorService>();
 builder.Services.AddSingleton<IInfographicService, InfographicService>();
 
@@ -51,7 +64,8 @@ await DatabaseInitializer.Initialize(host.Services.GetRequiredService<IDbConnect
 // Log configured model names
 var openAiOptions = host.Services.GetRequiredService<IOptions<AzureOpenAIOptions>>().Value;
 var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
-logger.LogInformation("Whisper deployment: {WhisperDeployment}, GPT deployment: {GptDeployment}",
-    openAiOptions.WhisperDeployment, openAiOptions.GptDeployment);
+var txOptions = host.Services.GetRequiredService<IOptions<TranscriptionOptions>>().Value;
+logger.LogInformation("Transcription provider: {Provider}, Whisper deployment: {WhisperDeployment}, GPT deployment: {GptDeployment}",
+    txOptions.Provider, openAiOptions.WhisperDeployment, openAiOptions.GptDeployment);
 
 host.Run();

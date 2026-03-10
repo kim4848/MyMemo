@@ -13,7 +13,8 @@ public sealed class TranscriptionProcessor(
     IBlobStorageService blobService,
     IWhisperService whisperService,
     IMemoTriggerService memoTrigger,
-    ILogger<TranscriptionProcessor> logger)
+    ILogger<TranscriptionProcessor> logger,
+    string transcriptionProvider = "whisper")
 {
     public async Task ProcessAsync(string sessionId, string chunkId, int chunkIndex, string blobPath, string language)
     {
@@ -26,7 +27,7 @@ public sealed class TranscriptionProcessor(
             var result = await whisperService.TranscribeAsync(audioStream, language);
             sw.Stop();
 
-            await transcriptions.CreateAsync(chunkId, result.Text, language, result.AverageConfidence, result.WordTimestampsJson, sw.ElapsedMilliseconds);
+            await transcriptions.CreateAsync(chunkId, result.Text, language, result.AverageConfidence, result.WordTimestampsJson, sw.ElapsedMilliseconds, transcriptionProvider);
             await chunks.UpdateStatusAsync(chunkId, "transcribed");
 
             await memoTrigger.TryQueueMemoGenerationAsync(sessionId);
@@ -43,6 +44,7 @@ public sealed class TranscriptionProcessor(
 public sealed class TranscriptionWorker(
     IServiceProvider serviceProvider,
     IOptions<StorageQueueOptions> options,
+    IOptions<TranscriptionOptions> transcriptionOptions,
     ILogger<TranscriptionWorker> logger) : BackgroundService
 {
     private const int MaxConcurrent = 4;
@@ -91,7 +93,8 @@ public sealed class TranscriptionWorker(
                 scope.ServiceProvider.GetRequiredService<IBlobStorageService>(),
                 scope.ServiceProvider.GetRequiredService<IWhisperService>(),
                 scope.ServiceProvider.GetRequiredService<IMemoTriggerService>(),
-                scope.ServiceProvider.GetRequiredService<ILogger<TranscriptionProcessor>>());
+                scope.ServiceProvider.GetRequiredService<ILogger<TranscriptionProcessor>>(),
+                transcriptionOptions.Value.Provider);
 
             await processor.ProcessAsync(body.SessionId, body.ChunkId, body.ChunkIndex, body.BlobPath, body.Language);
             await queue.DeleteMessageAsync(message.MessageId, message.PopReceipt, stoppingToken);

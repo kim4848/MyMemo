@@ -9,5 +9,6 @@ public sealed class Transcription
     public double? Confidence { get; init; }
     public string? WordTimestamps { get; init; }
     public long? TranscriptionDurationMs { get; init; }
+    public string TranscriptionProvider { get; init; } = "whisper";
     public required string CreatedAt { get; init; }
 }

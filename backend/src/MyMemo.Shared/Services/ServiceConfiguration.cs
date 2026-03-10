@@ -22,3 +22,17 @@ public sealed class AzureOpenAIOptions
     public string GptDeployment { get; init; } = "gpt-5.3-chat";
     public string ImageDeployment { get; init; } = "gpt-image-1.5";
 }
+
+public sealed class AzureSpeechOptions
+{
+    public required string Endpoint { get; init; }
+    public required string SubscriptionKey { get; init; }
+}
+
+public sealed class TranscriptionOptions
+{
+    /// <summary>
+    /// Which transcription provider to use: "whisper" (default) or "azure-fast".
+    /// </summary>
+    public string Provider { get; init; } = "whisper";
+}

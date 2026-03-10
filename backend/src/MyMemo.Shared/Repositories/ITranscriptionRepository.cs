@@ -4,6 +4,6 @@ namespace MyMemo.Shared.Repositories;
 
 public interface ITranscriptionRepository
 {
-    Task CreateAsync(string chunkId, string rawText, string language, double? confidence, string? wordTimestamps, long? transcriptionDurationMs = null);
+    Task CreateAsync(string chunkId, string rawText, string language, double? confidence, string? wordTimestamps, long? transcriptionDurationMs = null, string? transcriptionProvider = null);
     Task<IReadOnlyList<Transcription>> ListBySessionAsync(string sessionId);
 }
