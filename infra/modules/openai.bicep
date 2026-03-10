@@ -37,18 +37,37 @@ resource gptDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10
   parent: openAiAccount
   name: 'gpt-5.3-chat'
   sku: {
-    name: 'Standard'
+    name: 'GlobalStandard'
     capacity: 1
   }
   properties: {
     model: {
       format: 'OpenAI'
       name: 'gpt-5.3-chat'
-      version: '2026-02-01'
+      version: '2026-03-03'
     }
   }
   dependsOn: [
     whisperDeployment
+  ]
+}
+
+resource imageDeployment 'Microsoft.CognitiveServices/accounts/deployments@2024-10-01' = {
+  parent: openAiAccount
+  name: 'gpt-image-1.5'
+  sku: {
+    name: 'GlobalStandard'
+    capacity: 1
+  }
+  properties: {
+    model: {
+      format: 'OpenAI'
+      name: 'gpt-image-1.5'
+      version: '2025-12-16'
+    }
+  }
+  dependsOn: [
+    gptDeployment
   ]
 }
 

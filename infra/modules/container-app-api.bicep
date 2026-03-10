@@ -53,7 +53,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
     configuration: {
       ingress: {
         external: true
-        targetPort: 8080
+        targetPort: 80
         transport: 'http'
         allowInsecure: false
       }

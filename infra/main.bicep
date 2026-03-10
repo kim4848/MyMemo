@@ -1,6 +1,9 @@
 @description('Azure region for all resources')
 param location string = resourceGroup().location
 
+@description('Azure region for the OpenAI account')
+param openAiLocation string = 'swedencentral'
+
 @description('Environment name used as prefix for resource names')
 param environmentName string
 
@@ -59,7 +62,7 @@ module storage 'modules/storage.bicep' = {
 module openAi 'modules/openai.bicep' = {
   name: 'openai'
   params: {
-    location: location
+    location: openAiLocation
     openAiAccountName: '${environmentName}-openai'
   }
 }
