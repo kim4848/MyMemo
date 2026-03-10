@@ -104,8 +104,8 @@ public sealed class SpeechBatchTranscriptionService : ISpeechBatchTranscriptionS
 
                 var speakerId = phrase.Speaker ?? 0;
                 var text = best.Display ?? "";
-                var offsetSeconds = TimeSpan.FromTicks(long.Parse(phrase.Offset ?? "0")).TotalSeconds;
-                var durationSeconds = TimeSpan.FromTicks(long.Parse(phrase.Duration ?? "0")).TotalSeconds;
+                var offsetSeconds = ParseDuration(phrase.Offset).TotalSeconds;
+                var durationSeconds = ParseDuration(phrase.Duration).TotalSeconds;
 
                 if (!string.IsNullOrWhiteSpace(text))
                 {
@@ -123,6 +123,21 @@ public sealed class SpeechBatchTranscriptionService : ISpeechBatchTranscriptionS
         var baseUrl = _options.Endpoint.TrimEnd('/');
         var requestUrl = $"{baseUrl}/speechtotext/v3.2/transcriptions/{jobId}";
         await _httpClient.DeleteAsync(requestUrl);
+    }
+
+    private static TimeSpan ParseDuration(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return TimeSpan.Zero;
+
+        // Azure Speech API returns ISO 8601 durations (e.g. "PT0.67S") or tick counts
+        if (value.StartsWith("PT", StringComparison.OrdinalIgnoreCase))
+            return System.Xml.XmlConvert.ToTimeSpan(value);
+
+        if (long.TryParse(value, out var ticks))
+            return TimeSpan.FromTicks(ticks);
+
+        return TimeSpan.Zero;
     }
 
     private static string BuildReadableText(List<SpeakerSegment> segments)
