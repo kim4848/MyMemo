@@ -74,6 +74,46 @@ public sealed class MemoGeneratorService : IMemoGeneratorService
         - Marker usikre punkter med [?]
         """;
 
+    private const string TitlePrompt = """
+        Du får en rå transkription fra et møde eller en samtale.
+        Generer en kort, beskrivende titel (maks 60 tegn) der opsummerer emnet.
+        Svar KUN med titlen — ingen anførselstegn, ingen forklaring.
+        Skriv på dansk med mindre indholdet tydeligt er på et andet sprog.
+        """;
+
+    public async Task<string> GenerateTitleAsync(string fullTranscription)
+    {
+        var chatClient = _chatClient.Value;
+
+        // Use only the first ~2000 chars to keep the call fast and cheap
+        var snippet = fullTranscription.Length > 2000
+            ? fullTranscription[..2000]
+            : fullTranscription;
+
+        ChatMessage[] messages =
+        [
+            new SystemChatMessage(TitlePrompt),
+            new UserChatMessage(snippet)
+        ];
+
+        var contentBuilder = new StringBuilder();
+        await foreach (var update in chatClient.CompleteChatStreamingAsync(messages))
+        {
+            foreach (var part in update.ContentUpdate)
+            {
+                contentBuilder.Append(part.Text);
+            }
+        }
+
+        var title = contentBuilder.ToString().Trim();
+
+        // Enforce max length
+        if (title.Length > 80)
+            title = title[..77] + "...";
+
+        return title;
+    }
+
     public async Task<MemoResult> GenerateAsync(string fullTranscription, string outputMode, string? context = null)
     {
         var chatClient = _chatClient.Value;
