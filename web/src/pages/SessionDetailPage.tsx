@@ -165,7 +165,7 @@ export default function SessionDetailPage() {
           </svg>
           Back
         </Link>
-        <h1 className="text-xl font-bold text-white sm:text-2xl">Session</h1>
+        <h1 className="text-xl font-bold text-white sm:text-2xl">{session.title ?? 'Session'}</h1>
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${sessionStatusStyles[session.status] ?? ''}`}>
           {session.status}
         </span>

@@ -22,19 +22,24 @@ export default function SessionCard({ session, onDelete }: Props) {
   return (
     <div className="group flex items-start justify-between gap-3 rounded-xl border border-navy-700 bg-navy-800 p-4 transition-colors hover:border-navy-600 sm:items-center">
       <Link to={`/sessions/${session.id}`} className="min-w-0 flex-1">
-        <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
-          <span className={`self-start rounded-full px-2.5 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
-            {session.status}
-          </span>
-          <span className="text-sm text-gray-300">
-            {formatDateTime(session.createdAt)}
-          </span>
-          <span className="text-sm text-gray-500">
-            {formatDuration(session.startedAt, session.endedAt)}
-          </span>
-          <span className="text-xs text-gray-600">
-            {session.outputMode} &middot; {session.audioSource}
-          </span>
+        <div className="flex flex-col gap-1.5">
+          {session.title && (
+            <span className="truncate text-sm font-medium text-white">{session.title}</span>
+          )}
+          <div className="flex flex-col gap-1.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+            <span className={`self-start rounded-full px-2.5 py-0.5 text-xs font-medium ${style.bg} ${style.text}`}>
+              {session.status}
+            </span>
+            <span className="text-sm text-gray-300">
+              {formatDateTime(session.createdAt)}
+            </span>
+            <span className="text-sm text-gray-500">
+              {formatDuration(session.startedAt, session.endedAt)}
+            </span>
+            <span className="text-xs text-gray-600">
+              {session.outputMode} &middot; {session.audioSource}
+            </span>
+          </div>
         </div>
       </Link>
       {confirming ? (

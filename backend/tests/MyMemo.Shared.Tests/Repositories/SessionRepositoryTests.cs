@@ -153,5 +153,30 @@ public class SessionRepositoryTests : IDisposable
         updated!.Context.Should().BeNull();
     }
 
+    [Fact]
+    public async Task UpdateTitleAsync_SetsTitle()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone");
+
+        await _sut.UpdateTitleAsync(session.Id, "Budgetmøde");
+
+        var updated = await _sut.GetByIdAsync(session.Id);
+        updated!.Title.Should().Be("Budgetmøde");
+    }
+
+    [Fact]
+    public async Task UpdateTitleAsync_OverwritesExistingTitle()
+    {
+        var userId = await CreateTestUser();
+        var session = await _sut.CreateAsync(userId, "full", "microphone");
+
+        await _sut.UpdateTitleAsync(session.Id, "Første titel");
+        await _sut.UpdateTitleAsync(session.Id, "Ny titel");
+
+        var updated = await _sut.GetByIdAsync(session.Id);
+        updated!.Title.Should().Be("Ny titel");
+    }
+
     public void Dispose() => _db.Dispose();
 }

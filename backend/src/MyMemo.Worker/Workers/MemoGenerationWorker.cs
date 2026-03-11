@@ -61,6 +61,22 @@ public sealed class MemoGenerationProcessor(
             sw.Stop();
 
             await memos.CreateAsync(sessionId, session.OutputMode, result.Content, result.ModelUsed, result.PromptTokens, result.CompletionTokens, sw.ElapsedMilliseconds);
+
+            // Auto-generate title if not already set
+            if (string.IsNullOrWhiteSpace(session.Title))
+            {
+                try
+                {
+                    var title = await memoGenerator.GenerateTitleAsync(fullText);
+                    if (!string.IsNullOrWhiteSpace(title))
+                        await sessions.UpdateTitleAsync(sessionId, title);
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, "Auto-title generation failed for session {SessionId}, continuing without title", sessionId);
+                }
+            }
+
             await sessions.UpdateStatusAsync(sessionId, "completed");
             return true;
         }

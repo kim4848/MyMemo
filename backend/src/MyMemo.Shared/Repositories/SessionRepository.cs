@@ -98,6 +98,15 @@ public sealed class SessionRepository(IDbConnectionFactory db) : ISessionReposit
             new { id, context, now });
     }
 
+    public async Task UpdateTitleAsync(string id, string title)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        await conn.ExecuteAsync(
+            "UPDATE sessions SET title = @title, updated_at = @now WHERE id = @id",
+            new { id, title, now });
+    }
+
     public async Task<bool> TrySetMemoQueuedAsync(string id)
     {
         using var conn = await db.CreateConnectionAsync();

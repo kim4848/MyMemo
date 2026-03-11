@@ -21,6 +21,7 @@ public class MemoGenerationWorkerTests
     public MemoGenerationWorkerTests()
     {
         _chunks.GetTranscriptionStatusAsync(Arg.Any<string>()).Returns((2, true));
+        _memoGenerator.GenerateTitleAsync(Arg.Any<string>()).Returns("Auto-generated title");
         _sut = new MemoGenerationProcessor(_sessions, _chunks, _transcriptions, _memos, _memoGenerator, NullLogger<MemoGenerationProcessor>.Instance);
     }
 
@@ -155,5 +156,82 @@ public class MemoGenerationWorkerTests
 
         result.Should().BeFalse();
         await _memoGenerator.DidNotReceive().GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_AutoGeneratesTitle_WhenTitleIsNull()
+    {
+        _sessions.GetByIdAsync("session-1").Returns(new Session
+        {
+            Id = "session-1", UserId = "user-1", Status = "processing",
+            OutputMode = "full", AudioSource = "microphone", Title = null,
+            StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
+        });
+
+        _transcriptions.ListBySessionAsync("session-1").Returns(new List<Transcription>
+        {
+            new() { Id = "t1", ChunkId = "c1", RawText = "Vi diskuterede budgettet.", CreatedAt = "2026-01-01 00:00:00" }
+        });
+
+        _memoGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(new MemoResult("Memo indhold", "gpt-5.3-chat", 100, 50));
+        _memoGenerator.GenerateTitleAsync("Vi diskuterede budgettet.")
+            .Returns("Budgetmøde diskussion");
+
+        var result = await _sut.ProcessAsync("session-1");
+
+        result.Should().BeTrue();
+        await _sessions.Received(1).UpdateTitleAsync("session-1", "Budgetmøde diskussion");
+    }
+
+    [Fact]
+    public async Task ProcessAsync_SkipsAutoTitle_WhenTitleAlreadySet()
+    {
+        _sessions.GetByIdAsync("session-1").Returns(new Session
+        {
+            Id = "session-1", UserId = "user-1", Status = "processing",
+            OutputMode = "full", AudioSource = "microphone", Title = "Eksisterende titel",
+            StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
+        });
+
+        _transcriptions.ListBySessionAsync("session-1").Returns(new List<Transcription>
+        {
+            new() { Id = "t1", ChunkId = "c1", RawText = "Tekst her.", CreatedAt = "2026-01-01 00:00:00" }
+        });
+
+        _memoGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(new MemoResult("Memo", "gpt-5.3-chat", 100, 50));
+
+        var result = await _sut.ProcessAsync("session-1");
+
+        result.Should().BeTrue();
+        await _memoGenerator.DidNotReceive().GenerateTitleAsync(Arg.Any<string>());
+        await _sessions.DidNotReceive().UpdateTitleAsync(Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ProcessAsync_CompletesSuccessfully_WhenAutoTitleFails()
+    {
+        _sessions.GetByIdAsync("session-1").Returns(new Session
+        {
+            Id = "session-1", UserId = "user-1", Status = "processing",
+            OutputMode = "full", AudioSource = "microphone", Title = null,
+            StartedAt = "2026-01-01 00:00:00", CreatedAt = "2026-01-01 00:00:00", UpdatedAt = "2026-01-01 00:00:00"
+        });
+
+        _transcriptions.ListBySessionAsync("session-1").Returns(new List<Transcription>
+        {
+            new() { Id = "t1", ChunkId = "c1", RawText = "Tekst.", CreatedAt = "2026-01-01 00:00:00" }
+        });
+
+        _memoGenerator.GenerateAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(new MemoResult("Memo", "gpt-5.3-chat", 100, 50));
+        _memoGenerator.GenerateTitleAsync(Arg.Any<string>())
+            .Throws(new Exception("LLM error"));
+
+        var result = await _sut.ProcessAsync("session-1");
+
+        result.Should().BeTrue();
+        await _sessions.Received(1).UpdateStatusAsync("session-1", "completed");
     }
 }
