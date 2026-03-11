@@ -57,10 +57,15 @@ export function watchSessionForNotification(id: string, title: string | null): v
 }
 
 /**
- * Remove a session from the watch list (e.g. when user views it).
+ * Remove a session from the watch list and fire the notification.
+ * Called by SessionDetailPage when its own polling finds the memo first.
  */
 export function unwatchSession(id: string): void {
-  watchedSessions.delete(id);
+  const session = watchedSessions.get(id);
+  if (session) {
+    watchedSessions.delete(id);
+    showNotification(session.title, id, navigateFn);
+  }
 }
 
 // ── Poller ─────────────────────────────────────────────────────────────
