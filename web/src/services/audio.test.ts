@@ -1,5 +1,5 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
-import { AudioCaptureService } from './audio';
+import { AudioCaptureService, SystemAudioMissingError } from './audio';
 
 // Mock browser APIs
 const mockMediaStream = {
@@ -62,9 +62,35 @@ describe('AudioCaptureService', () => {
 
     expect(mockGetDisplayMedia).toHaveBeenCalledWith({
       audio: true,
-      video: true,
+      video: { displaySurface: 'monitor' },
+      systemAudio: 'include',
+      selfBrowserSurface: 'exclude',
     });
     expect(stream).toBeDefined();
+  });
+
+  test('getStream with "system" throws SystemAudioMissingError when no audio tracks', async () => {
+    const noAudioStream = {
+      getTracks: vi.fn(() => [{ stop: vi.fn() }]),
+      getAudioTracks: vi.fn(() => []),
+      getVideoTracks: vi.fn(() => [{ stop: vi.fn() }]),
+    };
+    mockGetDisplayMedia.mockResolvedValueOnce(noAudioStream);
+
+    const service = new AudioCaptureService();
+    await expect(service.getStream('system')).rejects.toThrow(SystemAudioMissingError);
+  });
+
+  test('getStream with "both" throws SystemAudioMissingError when system has no audio tracks', async () => {
+    const noAudioStream = {
+      getTracks: vi.fn(() => [{ stop: vi.fn() }]),
+      getAudioTracks: vi.fn(() => []),
+      getVideoTracks: vi.fn(() => [{ stop: vi.fn() }]),
+    };
+    mockGetDisplayMedia.mockResolvedValueOnce(noAudioStream);
+
+    const service = new AudioCaptureService();
+    await expect(service.getStream('both')).rejects.toThrow(SystemAudioMissingError);
   });
 
   test('getStream with "both" combines mic and system audio', async () => {

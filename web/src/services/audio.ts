@@ -1,5 +1,12 @@
 import type { AudioSource } from '../types';
 
+export class SystemAudioMissingError extends Error {
+  constructor() {
+    super('System audio was not shared. Please check "Share system audio" in the browser dialog.');
+    this.name = 'SystemAudioMissingError';
+  }
+}
+
 export interface AudioAnalysers {
   mic: AnalyserNode | null;
   system: AnalyserNode | null;
@@ -40,6 +47,12 @@ export class AudioCaptureService {
       } as DisplayMediaStreamOptions);
       // Discard video tracks
       stream.getVideoTracks().forEach((t) => t.stop());
+
+      if (stream.getAudioTracks().length === 0) {
+        stream.getTracks().forEach((t) => t.stop());
+        throw new SystemAudioMissingError();
+      }
+
       this.streams = [stream];
 
       this.audioContext = new AudioContext();
@@ -61,6 +74,12 @@ export class AudioCaptureService {
       selfBrowserSurface: 'exclude',
     } as DisplayMediaStreamOptions);
     sysStream.getVideoTracks().forEach((t) => t.stop());
+
+    if (sysStream.getAudioTracks().length === 0) {
+      micStream.getTracks().forEach((t) => t.stop());
+      sysStream.getTracks().forEach((t) => t.stop());
+      throw new SystemAudioMissingError();
+    }
 
     this.audioContext = new AudioContext();
     const micSource = this.audioContext.createMediaStreamSource(micStream);
