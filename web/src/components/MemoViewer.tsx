@@ -69,18 +69,30 @@ export default function MemoViewer({ memo, isProcessing, allTranscribed, session
         <div className="ml-auto flex items-center gap-2">
           <button
             onClick={handleCopy}
-            className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent sm:py-1"
+            title={copied ? 'Kopieret!' : 'Kopiér'}
+            className="rounded-lg border border-navy-600 bg-navy-700 p-1.5 text-gray-300 transition-colors hover:border-accent hover:text-accent"
           >
-            {copied ? 'Kopieret!' : 'Kopiér'}
+            {copied ? (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.666 3.888A2.25 2.25 0 0 0 13.5 2.25h-3a2.25 2.25 0 0 0-2.166 1.638m7.332 0c.055.194.084.4.084.612v0a.75.75 0 0 1-.75.75H9.334a.75.75 0 0 1-.75-.75v0c0-.212.03-.418.084-.612m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 19.5V6.257c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 0 1 1.927-.184" />
+              </svg>
+            )}
           </button>
           <button
             onClick={async () => {
               if (!isAuthenticated) await login();
               setShowPickerModal(true);
             }}
-            className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent sm:py-1"
+            title="Send to OneNote"
+            className="rounded-lg border border-navy-600 bg-navy-700 p-1.5 text-gray-300 transition-colors hover:border-accent hover:text-accent"
           >
-            Send to OneNote
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 3.75V16.5L12 14.25 7.5 16.5V3.75m9 0H18A2.25 2.25 0 0 1 20.25 6v12A2.25 2.25 0 0 1 18 20.25H6A2.25 2.25 0 0 1 3.75 18V6A2.25 2.25 0 0 1 6 3.75h1.5m9 0h-9" />
+            </svg>
           </button>
           <InfographicViewer sessionId={memo.sessionId} />
         </div>
