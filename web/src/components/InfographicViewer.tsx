@@ -13,6 +13,7 @@ function formatDuration(ms: number): string {
 export default function InfographicViewer({ sessionId }: Props) {
   const [infographic, setInfographic] = useState<Infographic | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showModal, setShowModal] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
@@ -56,6 +57,7 @@ export default function InfographicViewer({ sessionId }: Props) {
       setShowModal(true);
       return;
     }
+    setLoading(true);
     try {
       const result = await api.infographics.get(sessionId);
       setInfographic(result);
@@ -63,6 +65,8 @@ export default function InfographicViewer({ sessionId }: Props) {
     } catch {
       // No existing infographic — generate one
       await handleGenerate();
+    } finally {
+      setLoading(false);
     }
   }, [sessionId, infographic, handleGenerate]);
 
@@ -86,13 +90,18 @@ export default function InfographicViewer({ sessionId }: Props) {
     <>
       <button
         onClick={handleView}
-        disabled={generating}
+        disabled={generating || loading}
         className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed sm:py-1"
       >
         {generating ? (
           <span className="flex items-center gap-1.5">
             <span className="h-3 w-3 animate-spin rounded-full border border-gray-600 border-t-accent" />
             Generating...
+          </span>
+        ) : loading ? (
+          <span className="flex items-center gap-1.5">
+            <span className="h-3 w-3 animate-spin rounded-full border border-gray-600 border-t-accent" />
+            Loading...
           </span>
         ) : (
           'Infographic'
