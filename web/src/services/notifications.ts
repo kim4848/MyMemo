@@ -1,4 +1,5 @@
 import { api } from '../api/client';
+import { useToastStore } from '../stores/toast';
 
 /**
  * Request browser notification permission.
@@ -11,31 +12,34 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 }
 
 /**
- * Show a browser notification when a memo is ready.
+ * Notify the user that a memo is ready.
+ * Always shows an in-app toast. Also shows a browser notification if permitted.
  */
-function showNotification(
+function notifyMemoReady(
   sessionTitle: string | null,
   sessionId: string,
   onNavigate?: (path: string) => void,
 ): void {
-  if (!('Notification' in window)) return;
-  if (Notification.permission !== 'granted') return;
-
-  const title = 'MyMemo';
-  const body = sessionTitle
+  const message = sessionTitle
     ? `"${sessionTitle}" memo is ready`
     : 'Your memo is ready';
 
-  const notification = new Notification(title, {
-    body,
-    tag: `memo-ready-${sessionId}`,
-  });
+  // In-app toast — always works
+  useToastStore.getState().add(message, `/sessions/${sessionId}`);
 
-  notification.onclick = () => {
-    window.focus();
-    onNavigate?.(`/sessions/${sessionId}`);
-    notification.close();
-  };
+  // Browser notification — best-effort
+  if ('Notification' in window && Notification.permission === 'granted') {
+    const notification = new Notification('MyMemo', {
+      body: message,
+      tag: `memo-ready-${sessionId}`,
+    });
+
+    notification.onclick = () => {
+      window.focus();
+      onNavigate?.(`/sessions/${sessionId}`);
+      notification.close();
+    };
+  }
 }
 
 // ── Global session watch list ──────────────────────────────────────────
@@ -64,7 +68,7 @@ export function unwatchSession(id: string): void {
   const session = watchedSessions.get(id);
   if (session) {
     watchedSessions.delete(id);
-    showNotification(session.title, id, navigateFn);
+    notifyMemoReady(session.title, id, navigateFn);
   }
 }
 
@@ -80,7 +84,7 @@ async function pollOnce(): Promise<void> {
       const memo = await api.memos.get(id);
       if (memo) {
         watchedSessions.delete(id);
-        showNotification(session.title, id, navigateFn);
+        notifyMemoReady(session.title, id, navigateFn);
       }
     } catch {
       // Memo not ready yet — keep watching

@@ -6,6 +6,11 @@ html, body, #root {
   background-color: var(--color-navy-950);
 }
 
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(0.5rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 @theme {
   --color-navy-950: #060d19;
   --color-navy-900: #0b1628;
