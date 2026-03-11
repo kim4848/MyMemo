@@ -1,7 +1,10 @@
 import { useState, useCallback } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import type { Memo, Session } from '../types';
 import { outputModeLabels } from '../types';
 import { useMicrosoftAuth } from '../hooks/useMicrosoftAuth';
+import { memoToHtml } from '../lib/memoToHtml';
 import OneNotePickerModal from './OneNotePickerModal';
 import InfographicViewer from './InfographicViewer';
 
@@ -14,14 +17,6 @@ interface Props {
 
 function formatDuration(ms: number): string {
   return ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${ms}ms`;
-}
-
-function memoToHtml(content: string): string {
-  const paragraphs = content
-    .split('\n')
-    .map((line) => `<p>${line || '&nbsp;'}</p>`)
-    .join('\n');
-  return paragraphs;
 }
 
 export default function MemoViewer({ memo, isProcessing, allTranscribed, session }: Props) {
@@ -97,8 +92,8 @@ export default function MemoViewer({ memo, isProcessing, allTranscribed, session
           onClose={() => setShowPickerModal(false)}
         />
       )}
-      <div className="rounded-xl border border-navy-700 bg-navy-800 p-4 sm:p-6">
-        <div className="whitespace-pre-wrap text-sm leading-relaxed text-gray-300">{memo.content}</div>
+      <div className="prose prose-invert prose-sm max-w-none rounded-xl border border-navy-700 bg-navy-800 p-4 prose-headings:text-white prose-p:text-gray-300 prose-strong:text-white prose-li:text-gray-300 prose-a:text-accent prose-code:text-emerald-400 prose-th:text-gray-300 prose-td:text-gray-300 sm:p-6">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{memo.content}</ReactMarkdown>
       </div>
       <p className="text-xs text-gray-600">
         Model: {memo.modelUsed} &middot; Tokens: {memo.promptTokens ?? 0} + {memo.completionTokens ?? 0}
