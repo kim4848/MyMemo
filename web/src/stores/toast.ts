@@ -19,9 +19,22 @@ export const useToastStore = create<ToastState>((set) => ({
   add: (message, href) => {
     const id = String(++nextId);
     set((s) => ({ toasts: [...s.toasts, { id, message, href }] }));
-    setTimeout(() => {
+
+    const dismiss = () =>
       set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
-    }, 8_000);
+
+    // If tab is hidden, wait until visible before starting auto-dismiss timer
+    if (document.visibilityState === 'hidden') {
+      const onVisible = () => {
+        if (document.visibilityState === 'visible') {
+          document.removeEventListener('visibilitychange', onVisible);
+          setTimeout(dismiss, 8_000);
+        }
+      };
+      document.addEventListener('visibilitychange', onVisible);
+    } else {
+      setTimeout(dismiss, 8_000);
+    }
   },
   dismiss: (id) =>
     set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })),
