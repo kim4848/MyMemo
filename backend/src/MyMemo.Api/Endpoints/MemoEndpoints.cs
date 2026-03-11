@@ -16,6 +16,8 @@ public static class MemoEndpoints
             .RequireAuthorization();
         app.MapPost("/api/sessions/{sessionId}/regenerate", RegenerateMemo)
             .RequireAuthorization();
+        app.MapPut("/api/sessions/{sessionId}/memo", UpdateMemo)
+            .RequireAuthorization();
     }
 
     private static async Task<IResult> FinalizeSession(
@@ -103,5 +105,31 @@ public static class MemoEndpoints
         return Results.Accepted($"/api/sessions/{sessionId}/memo");
     }
 
+    private static async Task<IResult> UpdateMemo(
+        string sessionId,
+        UpdateMemoRequest request,
+        ISessionRepository sessions,
+        IMemoRepository memos,
+        IUserRepository users,
+        ClaimsPrincipal principal)
+    {
+        var clerkId = principal.FindFirstValue("sub");
+        if (clerkId is null) return Results.Unauthorized();
+
+        var user = await users.GetOrCreateByClerkIdAsync(clerkId, "", "");
+        var session = await sessions.GetByIdAsync(sessionId);
+        if (session is null || session.UserId != user.Id)
+            return Results.NotFound();
+
+        var memo = await memos.GetBySessionIdAsync(sessionId);
+        if (memo is null) return Results.NotFound();
+
+        await memos.UpdateContentAsync(sessionId, request.Content);
+
+        var updated = await memos.GetBySessionIdAsync(sessionId);
+        return Results.Ok(updated);
+    }
+
     private sealed record RegenerateRequest(string OutputMode, string? Context = null);
+    private sealed record UpdateMemoRequest(string Content);
 }

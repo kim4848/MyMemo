@@ -27,10 +27,19 @@ public sealed class MemoRepository(IDbConnectionFactory db) : IMemoRepository
             SELECT id AS Id, session_id AS SessionId, output_mode AS OutputMode, content AS Content,
                    model_used AS ModelUsed, prompt_tokens AS PromptTokens,
                    completion_tokens AS CompletionTokens, generation_duration_ms AS GenerationDurationMs,
-                   created_at AS CreatedAt
+                   created_at AS CreatedAt, updated_at AS UpdatedAt
             FROM memos WHERE session_id = @sessionId
             """,
             new { sessionId });
+    }
+
+    public async Task UpdateContentAsync(string sessionId, string content)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        await conn.ExecuteAsync(
+            "UPDATE memos SET content = @content, updated_at = @now WHERE session_id = @sessionId",
+            new { content, now, sessionId });
     }
 
     public async Task DeleteBySessionIdAsync(string sessionId)

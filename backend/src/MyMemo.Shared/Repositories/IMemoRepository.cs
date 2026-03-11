@@ -6,5 +6,6 @@ public interface IMemoRepository
 {
     Task CreateAsync(string sessionId, string outputMode, string content, string modelUsed, int? promptTokens, int? completionTokens, long? generationDurationMs = null);
     Task<Memo?> GetBySessionIdAsync(string sessionId);
+    Task UpdateContentAsync(string sessionId, string content);
     Task DeleteBySessionIdAsync(string sessionId);
 }

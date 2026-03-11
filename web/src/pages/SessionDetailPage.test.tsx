@@ -70,6 +70,7 @@ const mockMemo: Memo = {
   completionTokens: 500,
   generationDurationMs: 3200,
   createdAt: '2026-01-15T11:01:00',
+  updatedAt: null,
 };
 
 function renderPage() {

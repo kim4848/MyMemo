@@ -302,6 +302,7 @@ export default function SessionDetailPage() {
         isProcessing={session.status === 'processing'}
         allTranscribed={chunks.length > 0 && chunks.every((c) => c.status === 'transcribed')}
         session={session}
+        onMemoUpdate={setMemo}
       />
 
       {memo && chunkList}
