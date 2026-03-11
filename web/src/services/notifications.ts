@@ -24,35 +24,25 @@ function notifyMemoReady(
     ? `"${sessionTitle}" memo is ready`
     : 'Your memo is ready';
 
-  console.info('[notify] Firing notification for session', sessionId);
-
   // In-app toast — always works
   useToastStore.getState().add(message, `/sessions/${sessionId}`);
 
   // Browser notification — best-effort
-  if (!('Notification' in window)) {
-    console.warn('[notify] Notification API not available');
-    return;
-  }
-  if (Notification.permission !== 'granted') {
-    console.warn('[notify] Notification permission:', Notification.permission);
-    return;
-  }
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
 
   try {
     const notification = new Notification('MyMemo', {
       body: message,
       tag: `memo-ready-${sessionId}`,
     });
-    console.info('[notify] Browser notification created');
-
     notification.onclick = () => {
       window.focus();
       onNavigate?.(`/sessions/${sessionId}`);
       notification.close();
     };
-  } catch (err) {
-    console.error('[notify] Failed to create browser notification:', err);
+  } catch {
+    // Browser notification not supported in this context
   }
 }
 
@@ -70,7 +60,6 @@ const watchedSessions = new Map<string, WatchedSession>();
  * Call after finalize — automatically starts the poller.
  */
 export function watchSessionForNotification(id: string, title: string | null): void {
-  console.info('[notify] Watching session', id);
   watchedSessions.set(id, { id, title });
   ensurePolling();
 }
@@ -82,7 +71,6 @@ export function watchSessionForNotification(id: string, title: string | null): v
 export function unwatchSession(id: string): void {
   const session = watchedSessions.get(id);
   if (session) {
-    console.info('[notify] unwatchSession firing notification for', id);
     watchedSessions.delete(id);
     notifyMemoReady(session.title, id, navigateFn);
   }
@@ -98,8 +86,6 @@ async function pollOnce(): Promise<void> {
   const ids = [...watchedSessions.keys()];
   if (ids.length === 0) return;
 
-  console.info('[notify] Polling', ids.length, 'session(s):', ids.join(', '));
-
   for (const [id, session] of watchedSessions) {
     // Skip if another poller already resolved this session
     if (!watchedSessions.has(id)) continue;
@@ -107,7 +93,6 @@ async function pollOnce(): Promise<void> {
     try {
       const memo = await api.memos.get(id);
       if (memo) {
-        console.info('[notify] Memo found for session', id);
         if (watchedSessions.has(id)) {
           watchedSessions.delete(id);
           notifyMemoReady(session.title, id, navigateFn);
@@ -119,7 +104,6 @@ async function pollOnce(): Promise<void> {
   }
 
   if (watchedSessions.size === 0) {
-    console.info('[notify] All sessions resolved, stopping poller');
     stopNotificationPoller();
   }
 }
@@ -128,7 +112,6 @@ async function pollOnce(): Promise<void> {
 function ensurePolling(): void {
   if (pollTimer) return;
   if (watchedSessions.size === 0) return;
-  console.info('[notify] Starting poller');
   // Poll immediately, then every POLL_INTERVAL_MS
   pollOnce();
   pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);
