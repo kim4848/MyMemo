@@ -11,4 +11,5 @@ public sealed class Memo
     public int? CompletionTokens { get; init; }
     public long? GenerationDurationMs { get; init; }
     public required string CreatedAt { get; init; }
+    public string? UpdatedAt { get; init; }
 }

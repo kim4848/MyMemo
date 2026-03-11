@@ -53,6 +53,7 @@ export interface Memo {
   completionTokens: number | null;
   generationDurationMs: number | null;
   createdAt: string;
+  updatedAt: string | null;
 }
 
 export interface Infographic {

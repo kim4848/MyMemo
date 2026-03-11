@@ -97,6 +97,12 @@ export const api = {
         body: JSON.stringify({ outputMode, context }),
         noContent: true,
       }),
+    updateContent: (sessionId: string, content: string) =>
+      request<Memo>(`/api/sessions/${sessionId}/memo`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      }),
   },
   infographics: {
     generate: (sessionId: string) =>

@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS memos (
     prompt_tokens         INTEGER,
     completion_tokens     INTEGER,
     generation_duration_ms INTEGER,
-    created_at            TEXT NOT NULL DEFAULT (datetime('now'))
+    created_at            TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at            TEXT
 );
 
 CREATE TABLE IF NOT EXISTS batch_transcription_jobs (
