@@ -12,7 +12,6 @@ export async function requestNotificationPermission(): Promise<NotificationPermi
 
 /**
  * Show a browser notification when a memo is ready.
- * Only shows when the tab is hidden (user is elsewhere).
  */
 function showNotification(
   sessionTitle: string | null,
@@ -21,7 +20,6 @@ function showNotification(
 ): void {
   if (!('Notification' in window)) return;
   if (Notification.permission !== 'granted') return;
-  if (document.visibilityState === 'visible') return;
 
   const title = 'MyMemo';
   const body = sessionTitle
@@ -51,10 +49,11 @@ const watchedSessions = new Map<string, WatchedSession>();
 
 /**
  * Register a session for notification polling.
- * Call after finalize so the global poller picks it up.
+ * Call after finalize — automatically starts the poller.
  */
 export function watchSessionForNotification(id: string, title: string | null): void {
   watchedSessions.set(id, { id, title });
+  ensurePolling();
 }
 
 /**
@@ -83,21 +82,24 @@ async function pollOnce(): Promise<void> {
     }
   }
 
-  // Stop polling when nothing left to watch
   if (watchedSessions.size === 0) {
     stopNotificationPoller();
   }
 }
 
-/**
- * Start the global notification poller.
- * Call from a top-level component (Layout) — idempotent.
- */
-export function startNotificationPoller(navigate?: (path: string) => void): void {
-  navigateFn = navigate;
+/** Start the internal poller if sessions are waiting and it's not already running. */
+function ensurePolling(): void {
   if (pollTimer) return;
   if (watchedSessions.size === 0) return;
   pollTimer = setInterval(pollOnce, POLL_INTERVAL_MS);
+}
+
+/**
+ * Set the navigate function used for notification click handling.
+ * Call from Layout on mount.
+ */
+export function setNotificationNavigate(navigate: (path: string) => void): void {
+  navigateFn = navigate;
 }
 
 /**
@@ -108,11 +110,4 @@ export function stopNotificationPoller(): void {
     clearInterval(pollTimer);
     pollTimer = null;
   }
-}
-
-/**
- * Returns the number of sessions currently being watched.
- */
-export function watchedCount(): number {
-  return watchedSessions.size;
 }
