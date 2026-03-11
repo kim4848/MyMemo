@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import type { SessionDetail, Memo, ChunkStatus, OutputMode } from '../types';
 import { outputModeLabels } from '../types';
 import MemoViewer from '../components/MemoViewer';
+import { notifyMemoReady } from '../services/notifications';
 
 const chunkStatusStyles: Record<ChunkStatus, string> = {
   uploaded: 'text-gray-500',
@@ -87,6 +88,7 @@ export default function SessionDetailPage() {
             ...updatedDetail,
             session: { ...updatedDetail.session, status: 'completed' },
           });
+          notifyMemoReady(updatedDetail.session.title, id);
           clearInterval(pollRef.current);
         } else {
           setDetail(updatedDetail);
