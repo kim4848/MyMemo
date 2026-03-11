@@ -1,6 +1,7 @@
 import { useMicrosoftAuth } from './useMicrosoftAuth';
 import type { Memo, Session } from '../types';
 import { outputModeLabels } from '../types';
+import { memoToHtml } from '../lib/memoToHtml';
 
 const GRAPH_BASE = 'https://graph.microsoft.com/v1.0';
 
@@ -48,10 +49,7 @@ export function useOneNote() {
     });
     const title = session.title ?? 'MyMemo';
     const outputModeLabel = outputModeLabels[memo.outputMode];
-    const paragraphs = memo.content
-      .split('\n')
-      .map((line) => `<p>${line || '&nbsp;'}</p>`)
-      .join('\n    ');
+    const paragraphs = memoToHtml(memo.content);
 
     const html = `<!DOCTYPE html>
 <html>
