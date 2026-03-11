@@ -34,8 +34,10 @@ export class AudioCaptureService {
     if (source === 'system') {
       const stream = await navigator.mediaDevices.getDisplayMedia({
         audio: true,
-        video: true,
-      });
+        video: { displaySurface: 'monitor' },
+        systemAudio: 'include',
+        selfBrowserSurface: 'exclude',
+      } as DisplayMediaStreamOptions);
       // Discard video tracks
       stream.getVideoTracks().forEach((t) => t.stop());
       this.streams = [stream];
@@ -54,8 +56,10 @@ export class AudioCaptureService {
     });
     const sysStream = await navigator.mediaDevices.getDisplayMedia({
       audio: true,
-      video: true,
-    });
+      video: { displaySurface: 'monitor' },
+      systemAudio: 'include',
+      selfBrowserSurface: 'exclude',
+    } as DisplayMediaStreamOptions);
     sysStream.getVideoTracks().forEach((t) => t.stop());
 
     this.audioContext = new AudioContext();
