@@ -284,6 +284,7 @@ export default function SessionDetailPage() {
               Regenerate
             </button>
           </div>
+          <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">Kontekst</label>
           <textarea
             value={editContext}
             onChange={(e) => setEditContext(e.target.value)}
