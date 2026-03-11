@@ -24,6 +24,8 @@ export default function RecorderPage() {
     setTranscriptionMode,
     setContext,
     startRecording,
+    pauseRecording,
+    resumeRecording,
     stopRecording,
     finalize,
   } = useRecorderStore();
@@ -34,6 +36,14 @@ export default function RecorderPage() {
 
   const handleStop = () => {
     stopRecording();
+  };
+
+  const handlePause = () => {
+    pauseRecording();
+  };
+
+  const handleResume = () => {
+    resumeRecording();
   };
 
   const audioLevels = useAudioLevels(status === 'recording');
@@ -116,7 +126,7 @@ export default function RecorderPage() {
         </div>
       )}
 
-      {(status === 'recording' || status === 'stopped') && (
+      {(status === 'recording' || status === 'paused' || status === 'stopped') && (
         <div className="space-y-6">
           <div className="rounded-xl border border-navy-700 bg-navy-800 p-6 sm:p-8">
             <div className="flex items-center justify-center">
@@ -124,9 +134,15 @@ export default function RecorderPage() {
                 {status === 'recording' && (
                   <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
                 )}
+                {status === 'paused' && (
+                  <span className="h-3 w-3 rounded-full bg-yellow-500" />
+                )}
                 <RecordingTimer elapsedMs={elapsedMs} />
               </div>
             </div>
+            {status === 'paused' && (
+              <p className="mt-2 text-center text-sm text-yellow-400">Paused</p>
+            )}
             {status === 'recording' && (
               <div className="mt-4">
                 <AudioLevelIndicator levels={audioLevels} audioSource={audioSource} />
@@ -134,16 +150,40 @@ export default function RecorderPage() {
             )}
           </div>
 
-          {status === 'recording' && (
-            <button
-              onClick={handleStop}
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-navy-700 px-4 py-4 font-medium text-white transition-colors hover:bg-navy-600"
-            >
-              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                <rect x="6" y="6" width="12" height="12" rx="1" />
-              </svg>
-              Stop Recording
-            </button>
+          {(status === 'recording' || status === 'paused') && (
+            <div className="flex gap-3">
+              {status === 'recording' ? (
+                <button
+                  onClick={handlePause}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-navy-700 px-4 py-4 font-medium text-white transition-colors hover:bg-navy-600"
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <rect x="6" y="5" width="4" height="14" rx="1" />
+                    <rect x="14" y="5" width="4" height="14" rx="1" />
+                  </svg>
+                  Pause
+                </button>
+              ) : (
+                <button
+                  onClick={handleResume}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-accent px-4 py-4 font-medium text-white transition-colors hover:bg-accent-hover"
+                >
+                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                  Resume
+                </button>
+              )}
+              <button
+                onClick={handleStop}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-navy-700 px-4 py-4 font-medium text-white transition-colors hover:bg-navy-600"
+              >
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <rect x="6" y="6" width="12" height="12" rx="1" />
+                </svg>
+                Stop
+              </button>
+            </div>
           )}
 
           {status === 'stopped' && (() => {

@@ -15,7 +15,7 @@ export interface LocalChunk {
   status: LocalChunkStatus;
 }
 
-type RecorderStatus = 'idle' | 'recording' | 'stopped' | 'finalizing';
+type RecorderStatus = 'idle' | 'recording' | 'paused' | 'stopped' | 'finalizing';
 
 interface RecorderState {
   status: RecorderStatus;
@@ -33,6 +33,8 @@ interface RecorderState {
   setTranscriptionMode: (mode: TranscriptionMode) => void;
   setContext: (context: string) => void;
   startRecording: () => Promise<void>;
+  pauseRecording: () => void;
+  resumeRecording: () => void;
   stopRecording: () => void;
   finalize: () => Promise<void>;
   addChunk: (chunk: LocalChunk) => void;
@@ -52,6 +54,7 @@ let mediaRecorder: MediaRecorder | null = null;
 let timerInterval: ReturnType<typeof setInterval> | null = null;
 let chunkInterval: ReturnType<typeof setInterval> | null = null;
 let startTime: number | null = null;
+let pausedElapsed = 0;
 const chunkCache = new ChunkCache();
 
 export const useRecorderStore = create<RecorderState>((set, get) => ({
@@ -127,21 +130,69 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
       }
     }, CHUNK_INTERVAL_MS);
 
+    pausedElapsed = 0;
     startTime = Date.now();
     timerInterval = setInterval(() => {
       if (startTime) {
-        set({ elapsedMs: Date.now() - startTime });
+        set({ elapsedMs: pausedElapsed + (Date.now() - startTime) });
       }
     }, 1000);
+  },
+
+  pauseRecording: () => {
+    if (mediaRecorder?.state !== 'recording') return;
+
+    mediaRecorder.pause();
+
+    // Accumulate elapsed time and stop the timer
+    if (startTime) {
+      pausedElapsed += Date.now() - startTime;
+      startTime = null;
+    }
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+
+    // Stop the chunk interval while paused
+    if (chunkInterval) clearInterval(chunkInterval);
+    chunkInterval = null;
+
+    set({ status: 'paused' });
+  },
+
+  resumeRecording: () => {
+    if (mediaRecorder?.state !== 'paused') return;
+
+    mediaRecorder.resume();
+
+    // Restart timer from accumulated elapsed time
+    startTime = Date.now();
+    timerInterval = setInterval(() => {
+      if (startTime) {
+        set({ elapsedMs: pausedElapsed + (Date.now() - startTime) });
+      }
+    }, 1000);
+
+    // Restart chunk interval
+    chunkInterval = setInterval(() => {
+      if (mediaRecorder?.state === 'recording') {
+        mediaRecorder.stop();
+        mediaRecorder.start();
+      }
+    }, CHUNK_INTERVAL_MS);
+
+    set({ status: 'recording' });
   },
 
   stopRecording: () => {
     if (chunkInterval) clearInterval(chunkInterval);
     chunkInterval = null;
+    // Resume before stopping if paused, so ondataavailable fires
+    if (mediaRecorder?.state === 'paused') mediaRecorder.resume();
     mediaRecorder?.stop();
     audioService?.stop();
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
+    pausedElapsed = 0;
     set({ status: 'stopped' });
   },
 
@@ -190,6 +241,7 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = null;
     startTime = null;
+    pausedElapsed = 0;
     set({
       status: 'idle',
       sessionId: null,

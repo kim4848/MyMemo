@@ -35,6 +35,8 @@ vi.stubGlobal('MediaRecorder', vi.fn().mockImplementation(function() {
   return {
     start: vi.fn(),
     stop: vi.fn(),
+    pause: vi.fn(),
+    resume: vi.fn(),
     ondataavailable: null,
   };
 }));
@@ -68,7 +70,7 @@ describe('RecorderPage', () => {
     expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
   });
 
-  test('shows timer and stop button when recording', () => {
+  test('shows timer and pause/stop buttons when recording', () => {
     useRecorderStore.setState({
       status: 'recording',
       sessionId: 'sess1',
@@ -76,6 +78,20 @@ describe('RecorderPage', () => {
     });
     renderPage();
     expect(screen.getByText(/00:01:05/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /pause/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /stop/i })).toBeInTheDocument();
+  });
+
+  test('shows resume and stop buttons when paused', () => {
+    useRecorderStore.setState({
+      status: 'paused',
+      sessionId: 'sess1',
+      elapsedMs: 65000,
+    });
+    renderPage();
+    expect(screen.getByText(/00:01:05/)).toBeInTheDocument();
+    expect(screen.getByText(/paused/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /resume/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /stop/i })).toBeInTheDocument();
   });
 
