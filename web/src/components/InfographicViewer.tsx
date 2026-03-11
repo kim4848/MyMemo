@@ -91,20 +91,15 @@ export default function InfographicViewer({ sessionId }: Props) {
       <button
         onClick={handleView}
         disabled={generating || loading}
-        className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed sm:py-1"
+        title="Infographic"
+        className="rounded-lg border border-navy-600 bg-navy-700 p-1.5 text-gray-300 transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed"
       >
-        {generating ? (
-          <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 animate-spin rounded-full border border-gray-600 border-t-accent" />
-            Generating...
-          </span>
-        ) : loading ? (
-          <span className="flex items-center gap-1.5">
-            <span className="h-3 w-3 animate-spin rounded-full border border-gray-600 border-t-accent" />
-            Loading...
-          </span>
+        {generating || loading ? (
+          <span className="h-4 w-4 block animate-spin rounded-full border border-gray-600 border-t-accent" />
         ) : (
-          'Infographic'
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605" />
+          </svg>
         )}
       </button>
 
