@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-do
 import { useAuth, UserButton } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
 import { setTokenProvider } from '../api/client';
+import { startNotificationPoller, stopNotificationPoller } from '../services/notifications';
 
 export default function Layout() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
@@ -23,6 +24,16 @@ export default function Layout() {
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
+
+  // Global notification poller — runs as long as Layout is mounted
+  useEffect(() => {
+    startNotificationPoller(navigate);
+    const id = setInterval(() => startNotificationPoller(navigate), 5_000);
+    return () => {
+      clearInterval(id);
+      stopNotificationPoller();
+    };
+  }, [navigate]);
 
   if (!isLoaded) {
     return (
