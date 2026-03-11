@@ -40,6 +40,8 @@ vi.mock('../services/chunk-cache', () => ({
 const mockMediaRecorder = {
   start: vi.fn(),
   stop: vi.fn(),
+  pause: vi.fn(),
+  resume: vi.fn(),
   ondataavailable: null as ((e: { data: Blob }) => void) | null,
   onstop: null as (() => void) | null,
   state: 'inactive' as string,
@@ -93,6 +95,12 @@ beforeEach(() => {
     if (mockMediaRecorder.ondataavailable) {
       mockMediaRecorder.ondataavailable({ data: new Blob(['audio'], { type: 'audio/webm' }) });
     }
+  });
+  mockMediaRecorder.pause.mockImplementation(() => {
+    mockMediaRecorder.state = 'paused';
+  });
+  mockMediaRecorder.resume.mockImplementation(() => {
+    mockMediaRecorder.state = 'recording';
   });
 });
 
@@ -334,6 +342,108 @@ describe('multi-chunk recording', () => {
     // No more stop/start cycles after reset
     expect(mockMediaRecorder.stop).toHaveBeenCalledTimes(stopCallCount);
     expect(mockMediaRecorder.start).toHaveBeenCalledTimes(startCallCount);
+  });
+});
+
+describe('pause and resume', () => {
+  test('pauseRecording pauses MediaRecorder and sets status to paused', async () => {
+    vi.mocked(api.sessions.create).mockResolvedValue(sessionStub);
+
+    await useRecorderStore.getState().startRecording();
+    expect(useRecorderStore.getState().status).toBe('recording');
+
+    useRecorderStore.getState().pauseRecording();
+
+    expect(mockMediaRecorder.pause).toHaveBeenCalledTimes(1);
+    expect(useRecorderStore.getState().status).toBe('paused');
+  });
+
+  test('resumeRecording resumes MediaRecorder and sets status to recording', async () => {
+    vi.mocked(api.sessions.create).mockResolvedValue(sessionStub);
+
+    await useRecorderStore.getState().startRecording();
+    useRecorderStore.getState().pauseRecording();
+
+    useRecorderStore.getState().resumeRecording();
+
+    expect(mockMediaRecorder.resume).toHaveBeenCalledTimes(1);
+    expect(useRecorderStore.getState().status).toBe('recording');
+  });
+
+  test('timer stops during pause and resumes correctly', async () => {
+    vi.mocked(api.sessions.create).mockResolvedValue(sessionStub);
+
+    await useRecorderStore.getState().startRecording();
+
+    // Advance 5 seconds
+    vi.advanceTimersByTime(5000);
+    const elapsedBeforePause = useRecorderStore.getState().elapsedMs;
+    expect(elapsedBeforePause).toBeGreaterThanOrEqual(5000);
+
+    // Pause
+    useRecorderStore.getState().pauseRecording();
+
+    // Advance 10 seconds while paused — timer should NOT increase
+    vi.advanceTimersByTime(10000);
+    expect(useRecorderStore.getState().elapsedMs).toBe(elapsedBeforePause);
+
+    // Resume
+    useRecorderStore.getState().resumeRecording();
+
+    // Advance 3 seconds — timer should continue from where it paused
+    vi.advanceTimersByTime(3000);
+    const elapsedAfterResume = useRecorderStore.getState().elapsedMs;
+    expect(elapsedAfterResume).toBeGreaterThanOrEqual(elapsedBeforePause + 3000);
+    expect(elapsedAfterResume).toBeLessThan(elapsedBeforePause + 4000);
+  });
+
+  test('chunk interval does not fire during pause', async () => {
+    vi.mocked(api.sessions.create).mockResolvedValue(sessionStub);
+    vi.mocked(api.chunks.upload).mockResolvedValue({} as never);
+
+    await useRecorderStore.getState().startRecording();
+
+    // Pause after 1 minute
+    vi.advanceTimersByTime(60 * 1000);
+    useRecorderStore.getState().pauseRecording();
+
+    const stopCountAtPause = mockMediaRecorder.stop.mock.calls.length;
+
+    // Advance past chunk boundary while paused — should NOT trigger stop/start
+    vi.advanceTimersByTime(5 * 60 * 1000);
+    expect(mockMediaRecorder.stop).toHaveBeenCalledTimes(stopCountAtPause);
+  });
+
+  test('stopRecording works from paused state', async () => {
+    vi.mocked(api.sessions.create).mockResolvedValue(sessionStub);
+    vi.mocked(api.chunks.upload).mockResolvedValue({} as never);
+
+    await useRecorderStore.getState().startRecording();
+    useRecorderStore.getState().pauseRecording();
+
+    useRecorderStore.getState().stopRecording();
+
+    expect(useRecorderStore.getState().status).toBe('stopped');
+    // Should resume then stop to trigger ondataavailable
+    expect(mockMediaRecorder.resume).toHaveBeenCalled();
+    expect(mockMediaRecorder.stop).toHaveBeenCalled();
+  });
+
+  test('pauseRecording is a no-op when not recording', () => {
+    useRecorderStore.getState().pauseRecording();
+    expect(useRecorderStore.getState().status).toBe('idle');
+    expect(mockMediaRecorder.pause).not.toHaveBeenCalled();
+  });
+
+  test('resumeRecording is a no-op when not paused', async () => {
+    vi.mocked(api.sessions.create).mockResolvedValue(sessionStub);
+
+    await useRecorderStore.getState().startRecording();
+    useRecorderStore.getState().resumeRecording();
+
+    // Should still be recording, not have called resume
+    expect(useRecorderStore.getState().status).toBe('recording');
+    expect(mockMediaRecorder.resume).not.toHaveBeenCalled();
   });
 });
 
