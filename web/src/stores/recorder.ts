@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { api } from '../api/client';
 import { AudioCaptureService, SystemAudioMissingError } from '../services/audio';
 import { ChunkCache } from '../services/chunk-cache';
+import { watchSessionForNotification } from '../services/notifications';
 import type { AudioSource, OutputMode, TranscriptionMode } from '../types';
 
 export type LocalChunkStatus =
@@ -215,6 +216,7 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
     set({ status: 'finalizing' });
     try {
       await api.memos.finalize(sessionId);
+      watchSessionForNotification(sessionId, null);
     } catch (err) {
       set({ status: 'stopped' });
       throw err;

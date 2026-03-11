@@ -2,6 +2,8 @@ import { Link, NavLink, Outlet, useNavigate, useLocation } from 'react-router-do
 import { useAuth, UserButton } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
 import { setTokenProvider } from '../api/client';
+import { setNotificationNavigate, stopNotificationPoller } from '../services/notifications';
+import ToastContainer from './ToastContainer';
 
 export default function Layout() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
@@ -23,6 +25,12 @@ export default function Layout() {
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname]);
+
+  // Provide navigate to the global notification service
+  useEffect(() => {
+    setNotificationNavigate(navigate);
+    return () => stopNotificationPoller();
+  }, [navigate]);
 
   if (!isLoaded) {
     return (
@@ -131,6 +139,8 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
+
+      <ToastContainer />
     </div>
   );
 }

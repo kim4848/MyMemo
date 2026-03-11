@@ -6,6 +6,7 @@ import RecordingTimer from '../components/RecordingTimer';
 import AudioLevelIndicator from '../components/AudioLevelIndicator';
 import ChunkStatusList from '../components/ChunkStatusList';
 import { useAudioLevels } from '../hooks/useAudioLevels';
+import { requestNotificationPermission } from '../services/notifications';
 
 export default function RecorderPage() {
   const navigate = useNavigate();
@@ -31,6 +32,7 @@ export default function RecorderPage() {
   } = useRecorderStore();
 
   const handleStart = async () => {
+    requestNotificationPermission();
     await startRecording();
   };
 
