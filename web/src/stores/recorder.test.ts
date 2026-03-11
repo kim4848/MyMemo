@@ -9,17 +9,21 @@ vi.mock('../api/client', () => ({
   },
 }));
 
-vi.mock('../services/audio', () => ({
-  AudioCaptureService: vi.fn().mockImplementation(function () {
-    return {
-      getStream: vi.fn().mockResolvedValue({
-        getTracks: () => [],
-        getAudioTracks: () => [],
-      }),
-      stop: vi.fn(),
-    };
-  }),
-}));
+vi.mock('../services/audio', async () => {
+  const actual = await vi.importActual('../services/audio');
+  return {
+    ...actual,
+    AudioCaptureService: vi.fn().mockImplementation(function () {
+      return {
+        getStream: vi.fn().mockResolvedValue({
+          getTracks: () => [],
+          getAudioTracks: () => [],
+        }),
+        stop: vi.fn(),
+      };
+    }),
+  };
+});
 
 vi.mock('../services/chunk-cache', () => ({
   ChunkCache: vi.fn().mockImplementation(function () {

@@ -18,6 +18,7 @@ export default function RecorderPage() {
     outputMode,
     context,
     transcriptionMode,
+    error: storeError,
     setAudioSource,
     setOutputMode,
     setTranscriptionMode,
@@ -98,6 +99,11 @@ export default function RecorderPage() {
               className="w-full resize-none rounded-lg border border-navy-600 bg-navy-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-accent"
             />
           </div>
+          {storeError && (
+            <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-400">
+              {storeError}
+            </div>
+          )}
           <button
             onClick={handleStart}
             className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-4 font-medium text-white transition-colors hover:bg-red-700"

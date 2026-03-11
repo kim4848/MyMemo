@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../api/client';
-import { AudioCaptureService } from '../services/audio';
+import { AudioCaptureService, SystemAudioMissingError } from '../services/audio';
 import { ChunkCache } from '../services/chunk-cache';
 import type { AudioSource, OutputMode, TranscriptionMode } from '../types';
 
@@ -26,6 +26,7 @@ interface RecorderState {
   outputMode: OutputMode;
   transcriptionMode: TranscriptionMode;
   context: string;
+  error: string | null;
 
   setAudioSource: (source: AudioSource) => void;
   setOutputMode: (mode: OutputMode) => void;
@@ -62,6 +63,7 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
   outputMode: 'full',
   transcriptionMode: 'whisper',
   context: '',
+  error: null,
 
   setAudioSource: (audioSource) => set({ audioSource }),
   setOutputMode: (outputMode) => set({ outputMode }),
@@ -70,12 +72,24 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
 
   startRecording: async () => {
     const { audioSource, outputMode, transcriptionMode, context } = get();
+    set({ error: null });
+
+    audioService = new AudioCaptureService();
+    let stream: MediaStream;
+    try {
+      stream = await audioService.getStream(audioSource);
+    } catch (err) {
+      audioService?.stop();
+      audioService = null;
+      if (err instanceof SystemAudioMissingError) {
+        set({ error: err.message });
+        return;
+      }
+      throw err;
+    }
 
     const session = await api.sessions.create({ outputMode, audioSource, ...(context ? { context } : {}), transcriptionMode });
     set({ sessionId: session.id, status: 'recording', chunks: [] });
-
-    audioService = new AudioCaptureService();
-    const stream = await audioService.getStream(audioSource);
 
     mediaRecorder = new MediaRecorder(stream, {
       mimeType: 'audio/webm;codecs=opus',
@@ -181,6 +195,7 @@ export const useRecorderStore = create<RecorderState>((set, get) => ({
       sessionId: null,
       chunks: [],
       elapsedMs: 0,
+      error: null,
     });
   },
 }));
