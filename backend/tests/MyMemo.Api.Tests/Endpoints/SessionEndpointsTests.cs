@@ -92,6 +92,39 @@ public class SessionEndpointsTests : IClassFixture<WebApplicationFactory<Program
         body!.Context.Should().Be("Møde med København");
     }
 
+    [Fact]
+    public async Task RenameSpeaker_Returns404_WhenSessionNotFound()
+    {
+        var response = await _client.PostAsJsonAsync("/api/sessions/nonexistent/rename-speaker", new { oldName = "Speaker 0:", newName = "Kim:" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task RenameSpeaker_ReturnsBadRequest_WhenNamesEmpty()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/sessions", new { outputMode = "full", audioSource = "microphone" });
+        var session = await createResponse.Content.ReadFromJsonAsync<SessionResponse>();
+
+        var response = await _client.PostAsJsonAsync($"/api/sessions/{session!.Id}/rename-speaker", new { oldName = "", newName = "Kim" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task RenameSpeaker_ReturnsOk_WhenSessionExists()
+    {
+        var createResponse = await _client.PostAsJsonAsync("/api/sessions", new { outputMode = "full", audioSource = "microphone" });
+        var session = await createResponse.Content.ReadFromJsonAsync<SessionResponse>();
+
+        var response = await _client.PostAsJsonAsync($"/api/sessions/{session!.Id}/rename-speaker", new { oldName = "Speaker 0:", newName = "Kim:" });
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<RenameSpeakerResponse>();
+        body!.Replaced.Should().BeTrue();
+    }
+
     private sealed record SessionResponse(string Id, string Status, string OutputMode);
     private sealed record SessionWithContextResponse(string Id, string Status, string OutputMode, string? Context);
+    private sealed record RenameSpeakerResponse(bool Replaced);
 }

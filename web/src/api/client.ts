@@ -70,6 +70,12 @@ export const api = {
     get: (id: string) => request<SessionDetail>(`/api/sessions/${id}`),
     delete: (id: string) =>
       request<void>(`/api/sessions/${id}`, { method: 'DELETE' }),
+    renameSpeaker: (sessionId: string, oldName: string, newName: string) =>
+      request<{ replaced: boolean }>(`/api/sessions/${sessionId}/rename-speaker`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldName, newName }),
+      }),
   },
   chunks: {
     upload: (sessionId: string, audio: Blob, chunkIndex: number) => {

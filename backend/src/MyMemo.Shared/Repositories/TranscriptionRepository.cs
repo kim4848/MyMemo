@@ -35,4 +35,17 @@ public sealed class TranscriptionRepository(IDbConnectionFactory db) : ITranscri
             new { sessionId });
         return results.ToList();
     }
+
+    public async Task ReplaceSpeakerInSessionAsync(string sessionId, string oldName, string newName)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        await conn.ExecuteAsync(
+            """
+            UPDATE transcriptions
+            SET raw_text = REPLACE(raw_text, @oldName, @newName),
+                word_timestamps = REPLACE(word_timestamps, @oldName, @newName)
+            WHERE chunk_id IN (SELECT id FROM chunks WHERE session_id = @sessionId)
+            """,
+            new { oldName, newName, sessionId });
+    }
 }
