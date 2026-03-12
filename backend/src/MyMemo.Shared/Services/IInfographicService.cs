@@ -4,5 +4,5 @@ public sealed record InfographicResult(string ImageBase64, string ModelUsed, int
 
 public interface IInfographicService
 {
-    Task<InfographicResult> GenerateAsync(string memoContent, string outputMode);
+    Task<InfographicResult> GenerateAsync(string sessionId, string memoContent, string outputMode);
 }
