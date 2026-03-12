@@ -52,7 +52,6 @@ public sealed class InfographicPromptSanitizer : IInfographicPromptSanitizer
         var options = new ChatCompletionOptions
         {
             Temperature = 0.3f,
-            MaxOutputTokenCount = 600,
         };
 
         var result = await chatClient.CompleteChatAsync(messages, options, ct);
