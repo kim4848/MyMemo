@@ -49,12 +49,7 @@ public sealed class InfographicPromptSanitizer : IInfographicPromptSanitizer
             new UserChatMessage(memoContent)
         ];
 
-        var options = new ChatCompletionOptions
-        {
-            Temperature = 0.3f,
-        };
-
-        var result = await chatClient.CompleteChatAsync(messages, options, ct);
+        var result = await chatClient.CompleteChatAsync(messages, cancellationToken: ct);
         var sanitizedPrompt = result.Value.Content[0].Text.Trim();
 
         _logger.LogDebug(
