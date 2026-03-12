@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using Azure.Storage.Queues;
 using Microsoft.Extensions.Options;
+using MyMemo.Shared.Exceptions;
 using MyMemo.Shared.Repositories;
 using MyMemo.Shared.Services;
 
@@ -31,7 +32,7 @@ public sealed class InfographicGenerationProcessor(
             }
 
             var sw = Stopwatch.StartNew();
-            var result = await infographicService.GenerateAsync(memo.Content, memo.OutputMode);
+            var result = await infographicService.GenerateAsync(sessionId, memo.Content, memo.OutputMode);
             sw.Stop();
 
             await infographics.CreateAsync(
@@ -44,6 +45,13 @@ public sealed class InfographicGenerationProcessor(
 
             logger.LogInformation("Infographic generated for session {SessionId} in {Duration}ms", sessionId, sw.ElapsedMilliseconds);
             return true;
+        }
+        catch (InfographicModerationException ex)
+        {
+            logger.LogWarning(
+                "Moderation blocked infographic for session {SessionId}. Sanitized prompt: {Prompt}",
+                sessionId, ex.SanitizedPrompt);
+            return true; // Permanent failure — do not retry
         }
         catch (Exception ex)
         {

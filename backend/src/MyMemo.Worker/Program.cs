@@ -38,6 +38,7 @@ builder.Services.AddSingleton<IQueueService, QueueService>();
 builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
 builder.Services.AddSingleton<IWhisperService, WhisperService>();
 builder.Services.AddSingleton<IMemoGeneratorService, MemoGeneratorService>();
+builder.Services.AddSingleton<IInfographicPromptSanitizer, InfographicPromptSanitizer>();
 builder.Services.AddSingleton<IInfographicService, InfographicService>();
 builder.Services.AddSingleton<IAudioConverterService, AudioConverterService>();
 builder.Services.AddSingleton<ISpeechBatchTranscriptionService, SpeechBatchTranscriptionService>();
