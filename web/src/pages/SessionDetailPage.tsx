@@ -298,7 +298,7 @@ export default function SessionDetailPage() {
         </div>
       )}
 
-      {session.transcriptionMode === 'speech' && detail.transcriptionTexts.length > 0 && (
+      {session.transcriptionMode === 'speech' && detail.transcriptionTexts?.length > 0 && (
         <SpeakerRenamePanel
           sessionId={session.id}
           transcriptionTexts={detail.transcriptionTexts}
