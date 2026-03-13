@@ -116,4 +116,11 @@ describe('RecorderPage', () => {
       screen.getByRole('button', { name: /finalize/i }),
     ).toBeInTheDocument();
   });
+
+  test('resets to idle when mounted with finalizing status', () => {
+    useRecorderStore.setState({ status: 'finalizing', sessionId: 'sess1' });
+    renderPage();
+    expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
+    expect(useRecorderStore.getState().status).toBe('idle');
+  });
 });
