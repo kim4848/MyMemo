@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { Session } from '../types';
+import type { SessionWithTags } from '../types';
 import { formatDateTime, formatDuration } from '../lib/format';
+import SessionTagPicker from './SessionTagPicker';
 
 const statusStyles: Record<string, { bg: string; text: string }> = {
   recording: { bg: 'bg-yellow-500/10', text: 'text-yellow-400' },
@@ -11,7 +12,7 @@ const statusStyles: Record<string, { bg: string; text: string }> = {
 };
 
 interface Props {
-  session: Session;
+  session: SessionWithTags;
   onDelete: (id: string) => void;
 }
 
@@ -40,6 +41,7 @@ export default function SessionCard({ session, onDelete }: Props) {
               {session.outputMode} &middot; {session.audioSource}
             </span>
           </div>
+          <SessionTagPicker sessionId={session.id} sessionTags={session.tags} />
         </div>
       </Link>
       {confirming ? (

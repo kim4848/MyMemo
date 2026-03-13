@@ -64,6 +64,26 @@ CREATE TABLE IF NOT EXISTS memos (
     updated_at            TEXT
 );
 
+CREATE TABLE IF NOT EXISTS tags (
+    id          TEXT PRIMARY KEY DEFAULT (lower(hex(randomblob(16)))),
+    user_id     TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name        TEXT NOT NULL,
+    color       TEXT,
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(user_id, name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_tags_user ON tags(user_id);
+
+CREATE TABLE IF NOT EXISTS session_tags (
+    session_id  TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,
+    tag_id      TEXT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (session_id, tag_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_tags_session ON session_tags(session_id);
+CREATE INDEX IF NOT EXISTS idx_session_tags_tag ON session_tags(tag_id);
+
 CREATE TABLE IF NOT EXISTS batch_transcription_jobs (
     id            TEXT PRIMARY KEY,
     chunk_id      TEXT NOT NULL,
