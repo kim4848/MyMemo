@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useRecorderStore } from '../stores/recorder';
 import AudioSourcePicker from '../components/AudioSourcePicker';
@@ -29,7 +29,14 @@ export default function RecorderPage() {
     resumeRecording,
     stopRecording,
     finalize,
+    reset,
   } = useRecorderStore();
+
+  useEffect(() => {
+    if (status === 'finalizing') {
+      reset();
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = async () => {
     requestNotificationPermission();
