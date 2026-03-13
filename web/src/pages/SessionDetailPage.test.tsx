@@ -58,6 +58,7 @@ const mockDetail: SessionDetail = {
     },
   ],
   transcriptionDurations: { c1: 2400 },
+  transcriptionTexts: [],
 };
 
 const mockMemo: Memo = {

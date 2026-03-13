@@ -47,4 +47,13 @@ public sealed class MemoRepository(IDbConnectionFactory db) : IMemoRepository
         using var conn = await db.CreateConnectionAsync();
         await conn.ExecuteAsync("DELETE FROM memos WHERE session_id = @sessionId", new { sessionId });
     }
+
+    public async Task ReplaceSpeakerAsync(string sessionId, string oldName, string newName)
+    {
+        using var conn = await db.CreateConnectionAsync();
+        var now = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss");
+        await conn.ExecuteAsync(
+            "UPDATE memos SET content = REPLACE(content, @oldName, @newName), updated_at = @now WHERE session_id = @sessionId",
+            new { oldName, newName, now, sessionId });
+    }
 }

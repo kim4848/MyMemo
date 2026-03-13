@@ -13,6 +13,7 @@ public static class SessionEndpoints
         group.MapGet("", ListSessions);
         group.MapGet("{id}", GetSession);
         group.MapDelete("{id}", DeleteSession);
+        group.MapPost("{id}/rename-speaker", RenameSpeaker);
     }
 
     private static async Task<IResult> CreateSession(
@@ -69,7 +70,11 @@ public static class SessionEndpoints
             .Where(t => t.TranscriptionDurationMs.HasValue)
             .ToDictionary(t => t.ChunkId, t => t.TranscriptionDurationMs!.Value);
 
-        return Results.Ok(new { session, chunks = sessionChunks, transcriptionDurations });
+        var transcriptionTexts = sessionTranscriptions
+            .Select(t => new { chunkId = t.ChunkId, rawText = t.RawText })
+            .ToArray();
+
+        return Results.Ok(new { session, chunks = sessionChunks, transcriptionDurations, transcriptionTexts });
     }
 
     private static async Task<IResult> DeleteSession(
@@ -90,4 +95,33 @@ public static class SessionEndpoints
         await sessions.DeleteAsync(id);
         return Results.NoContent();
     }
+
+    private static async Task<IResult> RenameSpeaker(
+        string id,
+        RenameSpeakerRequest request,
+        ISessionRepository sessions,
+        ITranscriptionRepository transcriptions,
+        IMemoRepository memos,
+        IUserRepository users,
+        ClaimsPrincipal principal)
+    {
+        var clerkId = principal.FindFirstValue("sub");
+        if (clerkId is null) return Results.Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(request.OldName) || string.IsNullOrWhiteSpace(request.NewName))
+            return Results.BadRequest(new { error = "OldName and NewName are required." });
+
+        var user = await users.GetOrCreateByClerkIdAsync(clerkId, "", "");
+
+        var session = await sessions.GetByIdAsync(id);
+        if (session is null || session.UserId != user.Id)
+            return Results.NotFound();
+
+        await transcriptions.ReplaceSpeakerInSessionAsync(id, request.OldName, request.NewName);
+        await memos.ReplaceSpeakerAsync(id, request.OldName, request.NewName);
+
+        return Results.Ok(new { replaced = true });
+    }
+
+    private sealed record RenameSpeakerRequest(string OldName, string NewName);
 }

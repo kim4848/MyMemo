@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import type { SessionDetail, Memo, ChunkStatus, OutputMode } from '../types';
 import { outputModeLabels } from '../types';
 import MemoViewer from '../components/MemoViewer';
+import SpeakerRenamePanel from '../components/SpeakerRenamePanel';
 import { unwatchSession } from '../services/notifications';
 
 const chunkStatusStyles: Record<ChunkStatus, string> = {
@@ -295,6 +296,22 @@ export default function SessionDetailPage() {
             className="w-full resize-none rounded-lg border border-navy-600 bg-navy-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-accent"
           />
         </div>
+      )}
+
+      {session.transcriptionMode === 'speech' && detail.transcriptionTexts?.length > 0 && (
+        <SpeakerRenamePanel
+          sessionId={session.id}
+          transcriptionTexts={detail.transcriptionTexts}
+          onRenamed={async () => {
+            if (!id) return;
+            const [data, m] = await Promise.all([
+              api.sessions.get(id),
+              api.memos.get(id).catch(() => null),
+            ]);
+            setDetail(data);
+            if (m) setMemo(m);
+          }}
+        />
       )}
 
       <MemoViewer

@@ -41,6 +41,7 @@ export interface SessionDetail {
   session: Session;
   chunks: Chunk[];
   transcriptionDurations: Record<string, number>;
+  transcriptionTexts: Array<{ chunkId: string; rawText: string }>;
 }
 
 export interface Memo {

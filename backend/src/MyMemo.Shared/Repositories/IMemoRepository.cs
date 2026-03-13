@@ -8,4 +8,5 @@ public interface IMemoRepository
     Task<Memo?> GetBySessionIdAsync(string sessionId);
     Task UpdateContentAsync(string sessionId, string content);
     Task DeleteBySessionIdAsync(string sessionId);
+    Task ReplaceSpeakerAsync(string sessionId, string oldName, string newName);
 }
