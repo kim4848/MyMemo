@@ -35,6 +35,7 @@ public static class SessionEndpoints
 
     private static async Task<IResult> ListSessions(
         ISessionRepository sessions,
+        ITagRepository tags,
         IUserRepository users,
         ClaimsPrincipal principal)
     {
@@ -44,7 +45,16 @@ public static class SessionEndpoints
         var user = await users.GetOrCreateByClerkIdAsync(clerkId, "", "");
 
         var list = await sessions.ListByUserAsync(user.Id);
-        return Results.Ok(list);
+        var tagMap = await tags.GetTagsForSessionsAsync(list.Select(s => s.Id));
+
+        var result = list.Select(s => new
+        {
+            s.Id, s.UserId, s.Title, s.Status, s.OutputMode, s.AudioSource,
+            s.Context, s.TranscriptionMode, s.MemoQueued, s.StartedAt, s.EndedAt,
+            s.CreatedAt, s.UpdatedAt,
+            Tags = tagMap.TryGetValue(s.Id, out var t) ? t : new List<MyMemo.Shared.Models.Tag>()
+        });
+        return Results.Ok(result);
     }
 
     private static async Task<IResult> GetSession(

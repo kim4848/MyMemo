@@ -8,6 +8,14 @@ vi.mock('../api/client', () => ({
       create: vi.fn(),
       delete: vi.fn(),
     },
+    tags: {
+      list: vi.fn().mockResolvedValue([]),
+      create: vi.fn(),
+      delete: vi.fn(),
+      update: vi.fn(),
+      addToSession: vi.fn(),
+      removeFromSession: vi.fn(),
+    },
   },
 }));
 
@@ -26,13 +34,16 @@ const mockSession = {
   endedAt: null,
   createdAt: '2026-01-01T00:00:00',
   updatedAt: '2026-01-01T00:00:00',
+  tags: [],
 };
 
 beforeEach(() => {
   useSessionsStore.setState({
     sessions: [],
+    tags: [],
     loading: false,
     error: null,
+    selectedTagIds: [],
   });
   vi.clearAllMocks();
 });

@@ -56,6 +56,7 @@ builder.Services.AddScoped<IChunkRepository, ChunkRepository>();
 builder.Services.AddScoped<ITranscriptionRepository, TranscriptionRepository>();
 builder.Services.AddScoped<IMemoRepository, MemoRepository>();
 builder.Services.AddScoped<IInfographicRepository, InfographicRepository>();
+builder.Services.AddScoped<ITagRepository, TagRepository>();
 
 // Azure services
 builder.Services.Configure<AzureBlobOptions>(builder.Configuration.GetSection("AzureBlob"));
@@ -90,6 +91,7 @@ SessionEndpoints.Map(app);
 ChunkEndpoints.Map(app);
 MemoEndpoints.Map(app);
 InfographicEndpoints.Map(app);
+TagEndpoints.Map(app);
 
 app.Run();
 

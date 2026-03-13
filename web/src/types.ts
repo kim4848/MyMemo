@@ -68,6 +68,18 @@ export interface Infographic {
   createdAt: string;
 }
 
+export interface Tag {
+  id: string;
+  userId: string;
+  name: string;
+  color: string | null;
+  createdAt: string;
+}
+
+export interface SessionWithTags extends Session {
+  tags: Tag[];
+}
+
 export interface CreateSessionRequest {
   outputMode: OutputMode;
   audioSource: AudioSource;

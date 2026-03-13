@@ -1,9 +1,11 @@
 import type {
   Session,
+  SessionWithTags,
   SessionDetail,
   Chunk,
   Memo,
   Infographic,
+  Tag,
   CreateSessionRequest,
   OutputMode,
 } from '../types';
@@ -66,7 +68,7 @@ export const api = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       }),
-    list: () => request<Session[]>('/api/sessions'),
+    list: () => request<SessionWithTags[]>('/api/sessions'),
     get: (id: string) => request<SessionDetail>(`/api/sessions/${id}`),
     delete: (id: string) =>
       request<void>(`/api/sessions/${id}`, { method: 'DELETE' }),
@@ -108,6 +110,33 @@ export const api = {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
+      }),
+  },
+  tags: {
+    list: () => request<Tag[]>('/api/tags'),
+    create: (name: string, color?: string) =>
+      request<Tag>('/api/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, color }),
+      }),
+    update: (id: string, name: string, color?: string) =>
+      request<void>(`/api/tags/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, color }),
+      }),
+    delete: (id: string) =>
+      request<void>(`/api/tags/${id}`, { method: 'DELETE', noContent: true }),
+    addToSession: (sessionId: string, tagId: string) =>
+      request<void>(`/api/sessions/${sessionId}/tags/${tagId}`, {
+        method: 'POST',
+        noContent: true,
+      }),
+    removeFromSession: (sessionId: string, tagId: string) =>
+      request<void>(`/api/sessions/${sessionId}/tags/${tagId}`, {
+        method: 'DELETE',
+        noContent: true,
       }),
   },
   infographics: {
