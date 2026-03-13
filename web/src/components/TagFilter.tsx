@@ -13,6 +13,7 @@ export default function TagFilter() {
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState('');
   const [newColor, setNewColor] = useState(TAG_COLORS[0]);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
 
   const handleCreate = async () => {
     const name = newName.trim();
@@ -43,20 +44,55 @@ export default function TagFilter() {
                 style={{ backgroundColor: tag.color ?? '#6366f1' }}
               />
               {tag.name}
-              <span
-                role="button"
-                tabIndex={0}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteTag(tag.id);
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') { e.stopPropagation(); deleteTag(tag.id); }
-                }}
-                className="ml-0.5 hidden text-current opacity-60 hover:opacity-100 group-hover:inline"
-              >
-                &times;
-              </span>
+              {confirmingDeleteId === tag.id ? (
+                <span className="ml-1 inline-flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                  <span className="text-[10px] text-gray-300">Slet?</span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteTag(tag.id);
+                      setConfirmingDeleteId(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.stopPropagation(); deleteTag(tag.id); setConfirmingDeleteId(null); }
+                    }}
+                    className="rounded bg-red-500/20 px-1 text-[10px] text-red-400 hover:bg-red-500/30"
+                  >
+                    Ja
+                  </span>
+                  <span
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setConfirmingDeleteId(null);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') { e.stopPropagation(); setConfirmingDeleteId(null); }
+                    }}
+                    className="rounded bg-navy-700 px-1 text-[10px] text-gray-400 hover:bg-navy-600"
+                  >
+                    Nej
+                  </span>
+                </span>
+              ) : (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setConfirmingDeleteId(tag.id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') { e.stopPropagation(); setConfirmingDeleteId(tag.id); }
+                  }}
+                  className="ml-0.5 hidden text-current opacity-60 hover:opacity-100 group-hover:inline"
+                >
+                  &times;
+                </span>
+              )}
             </button>
           );
         })}
