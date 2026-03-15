@@ -10,6 +10,7 @@ RUN dotnet publish "src/MyMemo.Worker/MyMemo.Worker.csproj" -c Release -r linux-
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine
 RUN apk add --no-cache ffmpeg icu-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
 COPY --from=build /app/publish .
 ENTRYPOINT ["./MyMemo.Worker"]

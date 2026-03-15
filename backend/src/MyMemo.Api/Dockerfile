@@ -10,6 +10,7 @@ RUN dotnet publish "src/MyMemo.Api/MyMemo.Api.csproj" -c Release -r linux-musl-x
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine
 RUN apk add --no-cache icu-libs
+ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 8080
