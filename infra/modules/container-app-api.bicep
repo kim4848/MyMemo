@@ -19,13 +19,9 @@ param imageTag string = 'latest'
 @description('Azure Storage Account name')
 param storageAccountName string
 
-@description('Turso database URL')
+@description('SQL Database connection string')
 @secure()
-param tursoUrl string
-
-@description('Turso auth token')
-@secure()
-param tursoAuthToken string
+param sqlConnectionString string
 
 @description('Clerk secret key')
 @secure()
@@ -74,12 +70,8 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
         }
         {
-          name: 'turso-url'
-          value: tursoUrl
-        }
-        {
-          name: 'turso-auth-token'
-          value: tursoAuthToken
+          name: 'sql-connection-string'
+          value: sqlConnectionString
         }
         {
           name: 'clerk-secret-key'
@@ -99,8 +91,7 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
           env: [
             { name: 'AzureBlob__ConnectionString', secretRef: 'storage-connection-string' }
             { name: 'StorageQueue__ConnectionString', secretRef: 'storage-connection-string' }
-            { name: 'Turso__Url', secretRef: 'turso-url' }
-            { name: 'Turso__AuthToken', secretRef: 'turso-auth-token' }
+            { name: 'ConnectionStrings__SqlDatabase', secretRef: 'sql-connection-string' }
             { name: 'Clerk__SecretKey', secretRef: 'clerk-secret-key' }
             { name: 'Clerk__PublishableKey', value: clerkPublishableKey }
             { name: 'Clerk__Domain', value: clerkDomain }

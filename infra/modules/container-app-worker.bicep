@@ -19,13 +19,9 @@ param imageTag string = 'latest'
 @description('Azure Storage Account name')
 param storageAccountName string
 
-@description('Turso database URL')
+@description('SQL Database connection string')
 @secure()
-param tursoUrl string
-
-@description('Turso auth token')
-@secure()
-param tursoAuthToken string
+param sqlConnectionString string
 
 @description('Azure OpenAI endpoint')
 param openAiEndpoint string
@@ -78,12 +74,8 @@ resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
           value: 'DefaultEndpointsProtocol=https;AccountName=${storageAccount.name};AccountKey=${storageAccount.listKeys().keys[0].value};EndpointSuffix=${environment().suffixes.storage}'
         }
         {
-          name: 'turso-url'
-          value: tursoUrl
-        }
-        {
-          name: 'turso-auth-token'
-          value: tursoAuthToken
+          name: 'sql-connection-string'
+          value: sqlConnectionString
         }
         {
           name: 'openai-key'
@@ -107,8 +99,7 @@ resource workerApp 'Microsoft.App/containerApps@2024-03-01' = {
           env: [
             { name: 'AzureBlob__ConnectionString', secretRef: 'storage-connection-string' }
             { name: 'StorageQueue__ConnectionString', secretRef: 'storage-connection-string' }
-            { name: 'Turso__Url', secretRef: 'turso-url' }
-            { name: 'Turso__AuthToken', secretRef: 'turso-auth-token' }
+            { name: 'ConnectionStrings__SqlDatabase', secretRef: 'sql-connection-string' }
             { name: 'AzureOpenAI__Endpoint', value: openAiEndpoint }
             { name: 'AzureOpenAI__ApiKey', secretRef: 'openai-key' }
             { name: 'AzureSpeech__Endpoint', value: speechEndpoint }
