@@ -13,13 +13,9 @@ param apiImageTag string = 'latest'
 @description('Docker image tag for the Worker service')
 param workerImageTag string = 'latest'
 
-@description('Turso database URL')
+@description('SQL Server admin password')
 @secure()
-param tursoUrl string
-
-@description('Turso auth token')
-@secure()
-param tursoAuthToken string
+param sqlAdminPassword string
 
 @description('Clerk secret key')
 @secure()
@@ -76,6 +72,17 @@ module speech 'modules/speech.bicep' = {
   }
 }
 
+// --- SQL Database (Free Serverless) ---
+module sqlDatabase 'modules/sql-database.bicep' = {
+  name: 'sql-database'
+  params: {
+    location: location
+    serverName: '${environmentName}-sql'
+    databaseName: 'mymemo'
+    adminPassword: sqlAdminPassword
+  }
+}
+
 // --- Container Apps Environment ---
 module containerAppsEnv 'modules/container-apps-env.bicep' = {
   name: 'container-apps-env'
@@ -97,8 +104,7 @@ module apiApp 'modules/container-app-api.bicep' = {
     registryName: containerRegistry.outputs.name
     imageTag: apiImageTag
     storageAccountName: storage.outputs.accountName
-    tursoUrl: tursoUrl
-    tursoAuthToken: tursoAuthToken
+    sqlConnectionString: sqlDatabase.outputs.connectionString
     clerkSecretKey: clerkSecretKey
     clerkPublishableKey: clerkPublishableKey
     clerkDomain: clerkDomain
@@ -116,8 +122,7 @@ module workerApp 'modules/container-app-worker.bicep' = {
     registryName: containerRegistry.outputs.name
     imageTag: workerImageTag
     storageAccountName: storage.outputs.accountName
-    tursoUrl: tursoUrl
-    tursoAuthToken: tursoAuthToken
+    sqlConnectionString: sqlDatabase.outputs.connectionString
     openAiEndpoint: openAi.outputs.endpoint
     openAiAccountName: openAi.outputs.accountName
     speechEndpoint: speech.outputs.endpoint
@@ -128,6 +133,9 @@ module workerApp 'modules/container-app-worker.bicep' = {
 // --- Outputs ---
 @description('FQDN of the API Container App')
 output apiFqdn string = apiApp.outputs.fqdn
+
+@description('SQL Server FQDN')
+output sqlServerFqdn string = sqlDatabase.outputs.serverFqdn
 
 @description('Container Registry login server')
 output registryLoginServer string = containerRegistry.outputs.loginServer

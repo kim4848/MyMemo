@@ -7,16 +7,27 @@ using MyMemo.Worker.Workers;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Database — use Turso in production, SQLite locally
+// Database — Azure SQL in production, Turso as fallback, SQLite locally
+var sqlConnectionString = builder.Configuration.GetConnectionString("SqlDatabase");
 var tursoUrl   = builder.Configuration["Turso:Url"];
 var tursoToken = builder.Configuration["Turso:AuthToken"];
 
-if (!string.IsNullOrWhiteSpace(tursoUrl) && string.IsNullOrWhiteSpace(tursoToken))
-    throw new InvalidOperationException("Turso:AuthToken is required when Turso:Url is set.");
+IDbConnectionFactory dbFactory;
 
-IDbConnectionFactory dbFactory = !string.IsNullOrWhiteSpace(tursoUrl)
-    ? new TursoConnectionFactory(tursoUrl, tursoToken!)
-    : new SqliteConnectionFactory(builder.Configuration.GetConnectionString("Database") ?? "Data Source=mymemo.db");
+if (!string.IsNullOrWhiteSpace(sqlConnectionString))
+{
+    dbFactory = new SqlServerConnectionFactory(sqlConnectionString);
+}
+else if (!string.IsNullOrWhiteSpace(tursoUrl))
+{
+    if (string.IsNullOrWhiteSpace(tursoToken))
+        throw new InvalidOperationException("Turso:AuthToken is required when Turso:Url is set.");
+    dbFactory = new TursoConnectionFactory(tursoUrl, tursoToken!);
+}
+else
+{
+    dbFactory = new SqliteConnectionFactory(builder.Configuration.GetConnectionString("Database") ?? "Data Source=mymemo.db");
+}
 builder.Services.AddSingleton(dbFactory);
 
 // Repositories

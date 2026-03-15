@@ -25,29 +25,36 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddClerkAuth(builder.Configuration);
 
-// Database — use Turso in production, SQLite locally
+// Database — Azure SQL in production, Turso as fallback, SQLite locally
+var sqlConnectionString = builder.Configuration.GetConnectionString("SqlDatabase");
 var tursoUrl   = builder.Configuration["Turso:Url"];
 var tursoToken = builder.Configuration["Turso:AuthToken"];
 
-if (!string.IsNullOrWhiteSpace(tursoUrl) && string.IsNullOrWhiteSpace(tursoToken))
-    throw new InvalidOperationException("Turso:AuthToken is required when Turso:Url is set.");
-
-IDbConnectionFactory dbFactory = !string.IsNullOrWhiteSpace(tursoUrl)
-    ? new TursoConnectionFactory(tursoUrl, tursoToken!)
-    : new SqliteConnectionFactory(builder.Configuration.GetConnectionString("Database") ?? "Data Source=mymemo.db");
-builder.Services.AddSingleton(dbFactory);
-
-// Keep a connection alive for in-memory SQLite (shared cache requires one open connection)
+IDbConnectionFactory dbFactory;
 Microsoft.Data.Sqlite.SqliteConnection? keepAliveConnection = null;
-if (string.IsNullOrWhiteSpace(tursoUrl))
+
+if (!string.IsNullOrWhiteSpace(sqlConnectionString))
+{
+    dbFactory = new SqlServerConnectionFactory(sqlConnectionString);
+}
+else if (!string.IsNullOrWhiteSpace(tursoUrl))
+{
+    if (string.IsNullOrWhiteSpace(tursoToken))
+        throw new InvalidOperationException("Turso:AuthToken is required when Turso:Url is set.");
+    dbFactory = new TursoConnectionFactory(tursoUrl, tursoToken!);
+}
+else
 {
     var localCs = builder.Configuration.GetConnectionString("Database") ?? "Data Source=mymemo.db";
+    dbFactory = new SqliteConnectionFactory(localCs);
+    // Keep a connection alive for in-memory SQLite (shared cache requires one open connection)
     if (localCs.Contains("Mode=Memory", StringComparison.OrdinalIgnoreCase))
     {
         keepAliveConnection = new Microsoft.Data.Sqlite.SqliteConnection(localCs);
         keepAliveConnection.Open();
     }
 }
+builder.Services.AddSingleton(dbFactory);
 
 // Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
