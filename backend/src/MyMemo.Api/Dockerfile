@@ -9,6 +9,7 @@ COPY src/ src/
 RUN dotnet publish "src/MyMemo.Api/MyMemo.Api.csproj" -c Release -r linux-musl-x64 --self-contained -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/runtime-deps:8.0-alpine
+RUN apk add --no-cache icu-libs
 WORKDIR /app
 COPY --from=build /app/publish .
 EXPOSE 8080
