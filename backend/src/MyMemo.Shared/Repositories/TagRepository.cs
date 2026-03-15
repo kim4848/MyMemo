@@ -50,12 +50,16 @@ public sealed class TagRepository(IDbConnectionFactory db) : ITagRepository
     public async Task AddTagToSessionAsync(string sessionId, string tagId)
     {
         using var conn = await db.CreateConnectionAsync();
-        await conn.ExecuteAsync(
-            """
-            INSERT OR IGNORE INTO session_tags (session_id, tag_id)
-            VALUES (@sessionId, @tagId)
-            """,
-            new { sessionId, tagId });
+        try
+        {
+            await conn.ExecuteAsync(
+                """
+                INSERT INTO session_tags (session_id, tag_id)
+                VALUES (@sessionId, @tagId)
+                """,
+                new { sessionId, tagId });
+        }
+        catch { /* Row already exists — desired state */ }
     }
 
     public async Task RemoveTagFromSessionAsync(string sessionId, string tagId)
