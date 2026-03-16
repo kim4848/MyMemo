@@ -5,9 +5,10 @@ import type { Tag } from '../types';
 interface Props {
   sessionId: string;
   sessionTags: Tag[];
+  className?: string;
 }
 
-export default function SessionTagPicker({ sessionId, sessionTags }: Props) {
+export default function SessionTagPicker({ sessionId, sessionTags, className }: Props) {
   const { tags, addTagToSession, removeTagFromSession } = useSessionsStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -24,7 +25,7 @@ export default function SessionTagPicker({ sessionId, sessionTags }: Props) {
   const available = tags.filter((t) => !sessionTagIds.has(t.id));
 
   return (
-    <div ref={ref} className="relative inline-flex items-center gap-1">
+    <div ref={ref} className={`relative inline-flex items-center gap-1 ${className ?? ''}`}>
       {sessionTags.map((tag) => (
         <span
           key={tag.id}

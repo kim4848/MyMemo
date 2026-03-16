@@ -68,7 +68,7 @@ describe('RecorderPage', () => {
     renderPage();
     expect(screen.getByLabelText(/audio source/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/output mode/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /start recording/i })).toBeInTheDocument();
   });
 
   test('shows timer and pause/stop buttons when recording', () => {
@@ -124,7 +124,7 @@ describe('RecorderPage', () => {
   test('resets to idle when mounted with finalizing status', () => {
     useRecorderStore.setState({ status: 'finalizing', sessionId: 'sess1' });
     renderPage();
-    expect(screen.getByRole('button', { name: /start/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /start recording/i })).toBeInTheDocument();
     expect(useRecorderStore.getState().status).toBe('idle');
   });
 });

@@ -92,7 +92,8 @@ describe('SessionDetailPage', () => {
   test('shows loading state initially', () => {
     vi.mocked(api.sessions.get).mockReturnValue(new Promise(() => {}));
     renderPage();
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    // Loading state now shows skeleton placeholders instead of text
+    expect(document.querySelector('.animate-\\[shimmer_1\\.5s_linear_infinite\\]')).toBeInTheDocument();
   });
 
   test('shows session info and chunks after loading', async () => {

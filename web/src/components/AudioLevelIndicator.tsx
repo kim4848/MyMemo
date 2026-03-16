@@ -28,7 +28,7 @@ function LevelBar({ level, label }: { level: number; label: string }) {
           return (
             <div
               key={i}
-              className={`h-2 flex-1 rounded-sm transition-colors duration-75 ${color}`}
+              className={`h-3 flex-1 rounded-md transition-all duration-150 ${color}`}
             />
           );
         })}
