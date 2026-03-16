@@ -77,19 +77,20 @@ describe('DashboardPage', () => {
   test('shows loading state', () => {
     useSessionsStore.setState({ loading: true });
     renderPage();
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    // Loading state now shows skeleton cards + "Sessions" heading
+    expect(screen.getByText('Sessions')).toBeInTheDocument();
   });
 
   test('shows empty state when no sessions', () => {
     renderPage();
-    expect(screen.getByText(/no sessions/i)).toBeInTheDocument();
+    expect(screen.getByText(/no recordings yet/i)).toBeInTheDocument();
   });
 
   test('renders session cards', () => {
     useSessionsStore.setState({ sessions: mockSessions });
     renderPage();
-    expect(screen.getByText(/completed/i)).toBeInTheDocument();
-    expect(screen.getByText(/processing/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/completed/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/processing/i).length).toBeGreaterThan(0);
   });
 
   test('shows error state', () => {

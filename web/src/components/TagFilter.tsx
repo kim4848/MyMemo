@@ -34,7 +34,7 @@ export default function TagFilter() {
               className={`group flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                 active
                   ? 'border-transparent text-white'
-                  : 'border-navy-600 text-gray-400 hover:border-navy-500'
+                  : 'border-border text-text-secondary hover:border-border-strong'
               }`}
               style={active ? { backgroundColor: tag.color ?? '#6366f1' } : undefined}
             >
@@ -62,7 +62,7 @@ export default function TagFilter() {
         })}
         <button
           onClick={() => setShowCreate(!showCreate)}
-          className="rounded-full border border-dashed border-navy-600 px-3 py-1 text-xs text-gray-500 hover:border-navy-500 hover:text-gray-400"
+          className="rounded-full border border-dashed border-border-strong px-3 py-1 text-xs text-text-muted hover:border-accent hover:text-accent"
         >
           + Tag
         </button>
@@ -76,7 +76,7 @@ export default function TagFilter() {
             onChange={(e) => setNewName(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             placeholder="Tag name..."
-            className="rounded-lg border border-navy-600 bg-navy-900 px-3 py-1.5 text-sm text-white placeholder-gray-500 focus:border-accent focus:outline-none"
+            className="rounded-lg border border-border bg-bg-input px-3 py-1.5 text-sm text-text-primary placeholder:text-text-muted focus:border-accent focus:ring-2 focus:ring-accent/20 outline-none"
             autoFocus
           />
           <div className="flex gap-1">
@@ -85,7 +85,7 @@ export default function TagFilter() {
                 key={c}
                 onClick={() => setNewColor(c)}
                 className={`h-5 w-5 rounded-full border-2 ${
-                  newColor === c ? 'border-white' : 'border-transparent'
+                  newColor === c ? 'border-accent' : 'border-transparent'
                 }`}
                 style={{ backgroundColor: c }}
               />
@@ -93,13 +93,13 @@ export default function TagFilter() {
           </div>
           <button
             onClick={handleCreate}
-            className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent/80"
+            className="rounded-lg bg-accent px-3 py-1.5 text-xs font-medium text-white hover:bg-accent-hover"
           >
             Add
           </button>
           <button
             onClick={() => setShowCreate(false)}
-            className="text-xs text-gray-500 hover:text-gray-400"
+            className="text-xs text-text-muted hover:text-text-secondary"
           >
             Cancel
           </button>

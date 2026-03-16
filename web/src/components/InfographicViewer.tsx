@@ -92,10 +92,10 @@ export default function InfographicViewer({ sessionId }: Props) {
         onClick={handleView}
         disabled={generating || loading}
         title="Infographic"
-        className="rounded-lg border border-navy-600 bg-navy-700 p-1.5 text-gray-300 transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed"
+        className="rounded-lg border border-border bg-bg-card p-2 text-text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed focus-visible:ring-2 focus-visible:ring-accent/30 focus-visible:ring-offset-2"
       >
         {generating || loading ? (
-          <span className="h-4 w-4 block animate-spin rounded-full border border-gray-600 border-t-accent" />
+          <span className="h-4 w-4 block animate-spin rounded-full border border-border border-t-accent" />
         ) : (
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605" />
@@ -104,31 +104,31 @@ export default function InfographicViewer({ sessionId }: Props) {
       </button>
 
       {error && (
-        <p className="text-xs text-red-400 mt-1">{error}</p>
+        <p className="text-xs text-danger mt-1">{error}</p>
       )}
 
       {showModal && infographic && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-          <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-navy-700 bg-navy-900 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-navy-700 px-5 py-3">
-              <h3 className="text-sm font-semibold text-white">Infographic</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-border bg-bg-card shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border px-5 py-3">
+              <h3 className="text-sm font-semibold text-text-primary">Infographic</h3>
               <div className="flex items-center gap-2">
                 <button
                   onClick={handleDownloadPng}
-                  className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-1 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent"
+                  className="rounded-lg border border-border bg-bg-card px-3 py-1 text-xs font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent"
                 >
                   PNG
                 </button>
                 <button
                   onClick={handleGenerate}
                   disabled={generating}
-                  className="rounded-lg border border-navy-600 bg-navy-700 px-3 py-1 text-xs font-medium text-gray-300 transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
+                  className="rounded-lg border border-border bg-bg-card px-3 py-1 text-xs font-medium text-text-secondary transition-colors hover:border-accent hover:text-accent disabled:opacity-40"
                 >
                   {generating ? 'Regenerating...' : 'Regenerate'}
                 </button>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="ml-1 rounded-lg p-1 text-gray-400 transition-colors hover:text-white"
+                  className="ml-1 rounded-lg p-1 text-text-muted transition-colors hover:text-text-primary"
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
@@ -143,8 +143,8 @@ export default function InfographicViewer({ sessionId }: Props) {
                 className="mx-auto h-auto max-w-full rounded-lg"
               />
             </div>
-            <div className="border-t border-navy-700 px-5 py-2">
-              <p className="text-xs text-gray-600">
+            <div className="border-t border-border px-5 py-2">
+              <p className="text-xs text-text-muted">
                 Model: {infographic.modelUsed}
                 {infographic.promptTokens != null && (
                   <> &middot; Tokens: {infographic.promptTokens} + {infographic.completionTokens ?? 0}</>

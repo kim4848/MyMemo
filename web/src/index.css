@@ -1,9 +1,19 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+@import "@fontsource/inter/400.css";
+@import "@fontsource/inter/500.css";
+@import "@fontsource/inter/600.css";
+@import "@fontsource/poppins/500.css";
+@import "@fontsource/poppins/600.css";
 
 html, body, #root {
   min-height: 100dvh;
-  background-color: var(--color-navy-950);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 @keyframes slideIn {
@@ -11,12 +21,75 @@ html, body, #root {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: 0.4; }
+  100% { transform: scale(1.4); opacity: 0; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.font-heading { font-family: var(--font-heading); }
+
+button, [role="button"] { cursor: pointer; }
+
 @theme {
-  --color-navy-950: #060d19;
-  --color-navy-900: #0b1628;
-  --color-navy-800: #111f38;
-  --color-navy-700: #1a2d4d;
-  --color-navy-600: #243c63;
-  --color-accent: #10b981;
-  --color-accent-hover: #059669;
+  /* Semantic color tokens — light mode defaults */
+  --color-bg-primary: #F8FAFC;
+  --color-bg-card: #FFFFFF;
+  --color-bg-sidebar: #FFFFFF;
+  --color-bg-input: #F1F5F9;
+  --color-bg-hover: #F1F5F9;
+  --color-text-primary: #0F172A;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94A3B8;
+  --color-border: #E2E8F0;
+  --color-border-strong: #CBD5E1;
+  --color-accent: #2563EB;
+  --color-accent-hover: #1D4ED8;
+  --color-accent-light: #DBEAFE;
+  --color-success: #059669;
+  --color-success-light: #D1FAE5;
+  --color-warning: #D97706;
+  --color-warning-light: #FEF3C7;
+  --color-danger: #DC2626;
+  --color-danger-light: #FEE2E2;
+
+  /* Font families */
+  --font-heading: 'Poppins', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+}
+
+.dark {
+  --color-bg-primary: #0F172A;
+  --color-bg-card: #1E293B;
+  --color-bg-sidebar: #1E293B;
+  --color-bg-input: #334155;
+  --color-bg-hover: #334155;
+  --color-text-primary: #F8FAFC;
+  --color-text-secondary: #CBD5E1;
+  --color-text-muted: #64748B;
+  --color-border: #334155;
+  --color-border-strong: #475569;
+  --color-accent: #3B82F6;
+  --color-accent-hover: #2563EB;
+  --color-accent-light: rgba(59,130,246,0.15);
+  --color-success: #10B981;
+  --color-success-light: rgba(16,185,129,0.15);
+  --color-warning: #F59E0B;
+  --color-warning-light: rgba(245,158,11,0.15);
+  --color-danger: #EF4444;
+  --color-danger-light: rgba(239,68,68,0.15);
 }

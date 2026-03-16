@@ -13,22 +13,22 @@ function LevelBar({ level, label }: { level: number; label: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="w-12 shrink-0 text-right text-xs text-gray-400">
+      <span className="w-12 shrink-0 text-right text-xs text-text-secondary">
         {label}
       </span>
       <div className="flex flex-1 gap-0.5">
         {Array.from({ length: BAR_COUNT }, (_, i) => {
           const isActive = i < activeBars;
-          let color = 'bg-navy-600';
+          let color = 'bg-border';
           if (isActive) {
-            if (i < BAR_COUNT * 0.6) color = 'bg-accent';
+            if (i < BAR_COUNT * 0.6) color = 'bg-success';
             else if (i < BAR_COUNT * 0.85) color = 'bg-yellow-400';
-            else color = 'bg-red-500';
+            else color = 'bg-danger';
           }
           return (
             <div
               key={i}
-              className={`h-2 flex-1 rounded-sm transition-colors duration-75 ${color}`}
+              className={`h-3 flex-1 rounded-md transition-all duration-150 ${color}`}
             />
           );
         })}

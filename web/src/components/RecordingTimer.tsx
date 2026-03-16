@@ -9,7 +9,7 @@ export default function RecordingTimer({ elapsedMs }: Props) {
   const seconds = String(totalSec % 60).padStart(2, '0');
 
   return (
-    <span className="font-mono text-3xl font-light tracking-wider text-white sm:text-4xl">
+    <span className="font-mono text-4xl font-light tracking-wider text-text-primary tabular-nums">
       {hours}:{minutes}:{seconds}
     </span>
   );
