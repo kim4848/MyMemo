@@ -18,7 +18,7 @@ export default function AudioSourcePicker({
       <div>
         <label
           htmlFor="audio-source"
-          className="block text-sm font-medium text-gray-400"
+          className="block text-sm font-medium text-text-secondary"
         >
           Audio Source
         </label>
@@ -26,7 +26,7 @@ export default function AudioSourcePicker({
           id="audio-source"
           value={audioSource}
           onChange={(e) => onAudioSourceChange(e.target.value as AudioSource)}
-          className="mt-1 block w-full rounded-lg border border-navy-600 bg-navy-700 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-accent"
+          className="mt-1 block w-full rounded-lg border border-border bg-bg-input px-3 py-2.5 text-sm text-text-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
         >
           <option value="microphone">Microphone</option>
           <option value="system">System Audio</option>
@@ -36,7 +36,7 @@ export default function AudioSourcePicker({
       <div>
         <label
           htmlFor="output-mode"
-          className="block text-sm font-medium text-gray-400"
+          className="block text-sm font-medium text-text-secondary"
         >
           Output Mode
         </label>
@@ -44,7 +44,7 @@ export default function AudioSourcePicker({
           id="output-mode"
           value={outputMode}
           onChange={(e) => onOutputModeChange(e.target.value as OutputMode)}
-          className="mt-1 block w-full rounded-lg border border-navy-600 bg-navy-700 px-3 py-2.5 text-sm text-gray-200 outline-none focus:border-accent"
+          className="mt-1 block w-full rounded-lg border border-border bg-bg-input px-3 py-2.5 text-sm text-text-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
         >
           <option value="full">Full Transcript</option>
           <option value="summary">Summary</option>

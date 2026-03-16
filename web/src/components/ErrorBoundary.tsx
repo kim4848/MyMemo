@@ -18,12 +18,12 @@ export default class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <div className="flex min-h-screen items-center justify-center bg-navy-950">
+        <div className="flex min-h-screen items-center justify-center bg-bg-primary">
           <div className="text-center">
-            <h1 className="text-lg font-semibold text-white">
+            <h1 className="text-lg font-semibold text-text-primary">
               Something went wrong
             </h1>
-            <p className="mt-2 text-sm text-gray-400">
+            <p className="mt-2 text-sm text-text-secondary">
               {this.state.error.message}
             </p>
             <button
@@ -31,7 +31,7 @@ export default class ErrorBoundary extends Component<Props, State> {
                 this.setState({ error: null });
                 window.location.href = '/';
               }}
-              className="mt-4 rounded-lg bg-accent px-4 py-2 text-sm text-white hover:bg-accent-hover"
+              className="mt-4 rounded-lg bg-accent px-4 py-2.5 text-sm font-medium text-white hover:bg-accent-hover"
             >
               Go Home
             </button>

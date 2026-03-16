@@ -71,16 +71,12 @@ export default function RecorderPage() {
   return (
     <div className="mx-auto max-w-lg">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-white">New Recording</h1>
-        <div className="mt-1 flex items-center gap-2">
-          <span className="inline-block h-1 w-1 rounded-full bg-accent" />
-          <span className="h-px w-10 bg-accent" />
-        </div>
+        <h1 className="font-[family-name:var(--font-heading)] text-2xl font-semibold text-text-primary">New Recording</h1>
       </div>
 
       {status === 'idle' && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
+          <div className="rounded-xl border border-border bg-bg-card p-6 shadow-sm">
             <AudioSourcePicker
               audioSource={audioSource}
               outputMode={outputMode}
@@ -88,7 +84,7 @@ export default function RecorderPage() {
               onOutputModeChange={setOutputMode}
             />
           </div>
-          <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
+          <div className="rounded-xl border border-border bg-bg-card p-6 shadow-sm">
             <label className="flex items-center gap-3 cursor-pointer">
               <div className="relative">
                 <input
@@ -97,17 +93,17 @@ export default function RecorderPage() {
                   onChange={(e) => setTranscriptionMode(e.target.checked ? 'speech' : 'whisper')}
                   className="peer sr-only"
                 />
-                <div className="h-6 w-11 rounded-full bg-navy-600 peer-checked:bg-accent transition-colors" />
+                <div className="h-6 w-11 rounded-full bg-border-strong peer-checked:bg-accent transition-colors" />
                 <div className="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white transition-transform peer-checked:translate-x-5" />
               </div>
               <div>
-                <span className="text-sm font-medium text-gray-200">Med taleridentifikation</span>
-                <p className="text-xs text-gray-500">Identificerer hvem der taler (bedst til møder med flere deltagere)</p>
+                <span className="text-sm font-medium text-text-primary">Med taleridentifikation</span>
+                <p className="text-xs text-text-muted">Identificerer hvem der taler (bedst til møder med flere deltagere)</p>
               </div>
             </label>
           </div>
-          <div className="rounded-xl border border-navy-700 bg-navy-800 p-6">
-            <label className="mb-2 block text-sm font-medium text-gray-400">
+          <div className="rounded-xl border border-border bg-bg-card p-6 shadow-sm">
+            <label className="mb-2 block text-sm font-medium text-text-secondary">
               Kontekst (valgfrit)
             </label>
             <textarea
@@ -115,17 +111,17 @@ export default function RecorderPage() {
               onChange={(e) => setContext(e.target.value)}
               placeholder="F.eks. møde med København, deltagere: Anne, Bjarne. Emne: teknisk overdragelse af x-produkt"
               rows={3}
-              className="w-full resize-none rounded-lg border border-navy-600 bg-navy-700 px-3 py-2 text-sm text-gray-200 placeholder-gray-500 outline-none focus:border-accent"
+              className="w-full resize-none rounded-lg border border-border bg-bg-input px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             />
           </div>
           {storeError && (
-            <div className="rounded-xl border border-yellow-500/20 bg-yellow-500/10 px-4 py-3 text-sm text-yellow-400">
+            <div className="rounded-xl border border-warning/30 bg-warning-light px-4 py-3 text-sm text-warning">
               {storeError}
             </div>
           )}
           <button
             onClick={handleStart}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-4 font-medium text-white transition-colors hover:bg-red-700"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-danger px-4 py-4 font-medium text-white transition-colors hover:bg-red-700"
           >
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="8" />
@@ -137,20 +133,20 @@ export default function RecorderPage() {
 
       {(status === 'recording' || status === 'paused' || status === 'stopped') && (
         <div className="space-y-6">
-          <div className="rounded-xl border border-navy-700 bg-navy-800 p-6 sm:p-8">
+          <div className="rounded-xl border border-border bg-bg-card p-6 shadow-sm sm:p-8">
             <div className="flex items-center justify-center">
               <div className="flex items-center gap-4">
                 {status === 'recording' && (
-                  <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
+                  <span className="h-3 w-3 animate-pulse rounded-full bg-danger" />
                 )}
                 {status === 'paused' && (
-                  <span className="h-3 w-3 rounded-full bg-yellow-500" />
+                  <span className="h-3 w-3 rounded-full bg-warning" />
                 )}
                 <RecordingTimer elapsedMs={elapsedMs} />
               </div>
             </div>
             {status === 'paused' && (
-              <p className="mt-2 text-center text-sm text-yellow-400">Paused</p>
+              <p className="mt-2 text-center text-sm text-warning">Paused</p>
             )}
             {status === 'recording' && (
               <div className="mt-4">
@@ -164,7 +160,7 @@ export default function RecorderPage() {
               {status === 'recording' ? (
                 <button
                   onClick={handlePause}
-                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-navy-700 px-4 py-4 font-medium text-white transition-colors hover:bg-navy-600"
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-border bg-bg-card px-4 py-4 font-medium text-text-primary transition-colors hover:bg-bg-hover"
                 >
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                     <rect x="6" y="5" width="4" height="14" rx="1" />
@@ -185,7 +181,7 @@ export default function RecorderPage() {
               )}
               <button
                 onClick={handleStop}
-                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-navy-700 px-4 py-4 font-medium text-white transition-colors hover:bg-navy-600"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-danger/30 bg-bg-card px-4 py-4 font-medium text-danger transition-colors hover:bg-danger-light"
               >
                 <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
                   <rect x="6" y="6" width="12" height="12" rx="1" />
@@ -210,7 +206,7 @@ export default function RecorderPage() {
                   className={`flex w-full items-center justify-center gap-2 rounded-xl px-4 py-4 font-medium text-white transition-colors ${
                     canFinalize
                       ? 'bg-accent hover:bg-accent-hover'
-                      : 'cursor-not-allowed bg-gray-600 opacity-50'
+                      : 'cursor-not-allowed bg-border-strong opacity-50'
                   }`}
                 >
                   <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -219,12 +215,12 @@ export default function RecorderPage() {
                   Finalize &amp; Generate Memo
                 </button>
                 {hasIncomplete && (
-                  <p className="text-center text-sm text-yellow-400">
+                  <p className="text-center text-sm text-warning">
                     Waiting for chunks to finish uploading...
                   </p>
                 )}
                 {hasFailed && (
-                  <p className="text-center text-sm text-red-400">
+                  <p className="text-center text-sm text-danger">
                     Some chunks failed to upload. Please retry or start a new recording.
                   </p>
                 )}
@@ -237,14 +233,14 @@ export default function RecorderPage() {
       )}
 
       {status === 'finalizing' && (
-        <div className="rounded-xl border border-navy-700 bg-navy-800 p-8 text-center">
-          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-gray-600 border-t-accent" />
-          <p className="text-gray-400">Finalizing session...</p>
+        <div className="rounded-xl border border-border bg-bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-2 border-border border-t-accent" />
+          <p className="text-text-muted">Finalizing session...</p>
         </div>
       )}
 
       {error && (
-        <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        <div className="mt-4 rounded-xl border border-danger/30 bg-danger-light px-4 py-3 text-sm text-danger">
           {error}
         </div>
       )}

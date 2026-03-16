@@ -3,6 +3,7 @@ import { useAuth, UserButton } from '@clerk/clerk-react';
 import { useEffect, useState } from 'react';
 import { setTokenProvider } from '../api/client';
 import { setNotificationNavigate, stopNotificationPoller } from '../services/notifications';
+import { useTheme } from '../hooks/useTheme';
 import ToastContainer from './ToastContainer';
 
 export default function Layout() {
@@ -10,6 +11,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
@@ -34,8 +36,8 @@ export default function Layout() {
 
   if (!isLoaded) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-navy-950">
-        <div className="text-gray-400">Loading...</div>
+      <div className="flex min-h-dvh items-center justify-center bg-bg-primary">
+        <div className="text-text-muted">Loading...</div>
       </div>
     );
   }
@@ -45,14 +47,14 @@ export default function Layout() {
   const navLink = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
       isActive
-        ? 'bg-navy-700 text-accent'
-        : 'text-gray-400 hover:bg-navy-800 hover:text-gray-200'
+        ? 'bg-accent-light text-accent'
+        : 'text-text-secondary hover:bg-bg-hover hover:text-text-primary'
     }`;
 
   const sidebarContent = (
     <>
       <div className="px-5 py-6">
-        <Link to="/" className="text-xl font-bold text-white tracking-wide">
+        <Link to="/" className="text-xl font-bold text-text-primary tracking-wide">
           My<span className="text-accent">Memo</span>
         </Link>
       </div>
@@ -72,7 +74,7 @@ export default function Layout() {
         </NavLink>
       </nav>
 
-      <div className="border-t border-navy-700 px-4 py-4">
+      <div className="border-t border-border px-4 py-4">
         <div className="flex items-center gap-3">
           <UserButton
             appearance={{
@@ -81,22 +83,37 @@ export default function Layout() {
               },
             }}
           />
-          <span className="text-sm text-gray-400 truncate">Account</span>
+          <span className="text-sm text-text-secondary truncate">Account</span>
+          <button
+            onClick={toggleTheme}
+            className="ml-auto rounded-lg p-2 text-text-muted hover:bg-bg-hover hover:text-text-primary transition-colors"
+            aria-label="Toggle theme"
+          >
+            {theme === 'light' ? (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z" />
+              </svg>
+            ) : (
+              <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+              </svg>
+            )}
+          </button>
         </div>
       </div>
     </>
   );
 
   return (
-    <div className="flex min-h-dvh bg-navy-950">
+    <div className="flex min-h-dvh bg-bg-primary">
       {/* Mobile top bar */}
-      <div className="fixed inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b border-navy-700 bg-navy-900 px-4 md:hidden">
-        <Link to="/" className="text-lg font-bold text-white tracking-wide">
+      <div className="fixed inset-x-0 top-0 z-20 flex h-14 items-center justify-between border-b border-border bg-bg-card px-4 md:hidden">
+        <Link to="/" className="text-lg font-bold text-text-primary tracking-wide">
           My<span className="text-accent">Memo</span>
         </Link>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="rounded-lg p-2 text-gray-400 hover:bg-navy-800 hover:text-white"
+          className="rounded-lg p-2 text-text-muted hover:bg-bg-hover hover:text-text-primary"
           aria-label="Toggle menu"
         >
           {sidebarOpen ? (
@@ -114,14 +131,14 @@ export default function Layout() {
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/60 md:hidden"
+          className="fixed inset-0 z-30 bg-black/50 md:hidden"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Mobile sidebar drawer */}
       <aside
-        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-navy-700 bg-navy-900 transition-transform duration-200 md:hidden ${
+        className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r border-border bg-bg-sidebar shadow-lg transition-transform duration-200 md:hidden ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -129,12 +146,12 @@ export default function Layout() {
       </aside>
 
       {/* Desktop sidebar */}
-      <aside className="fixed inset-y-0 left-0 z-10 hidden w-56 flex-col border-r border-navy-700 bg-navy-900 md:flex">
+      <aside className="fixed inset-y-0 left-0 z-10 hidden w-56 flex-col border-r border-border bg-bg-sidebar md:flex">
         {sidebarContent}
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 pt-14 px-4 pb-6 md:ml-56 md:p-8 md:pt-8">
+      <main className="flex-1 pt-14 px-4 pb-6 md:ml-56 md:py-10 md:px-8">
         <div className="mx-auto max-w-4xl">
           <Outlet />
         </div>

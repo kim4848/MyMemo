@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { useRecorderStore } from '../stores/recorder';
@@ -95,7 +96,7 @@ describe('RecorderPage', () => {
     expect(screen.getByRole('button', { name: /stop/i })).toBeInTheDocument();
   });
 
-  test('shows chunk status list', () => {
+  test('shows chunk status list', async () => {
     useRecorderStore.setState({
       status: 'recording',
       sessionId: 'sess1',
@@ -105,6 +106,9 @@ describe('RecorderPage', () => {
       ],
     });
     renderPage();
+    // Chunk list is behind a disclosure — expand it
+    const chunksHeader = screen.getByText(/chunks/i);
+    await userEvent.click(chunksHeader);
     expect(screen.getByText(/chunk 1/i)).toBeInTheDocument();
     expect(screen.getByText(/chunk 2/i)).toBeInTheDocument();
   });

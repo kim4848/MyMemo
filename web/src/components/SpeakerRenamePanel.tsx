@@ -53,15 +53,15 @@ export default function SpeakerRenamePanel({ sessionId, transcriptionTexts, onRe
   }
 
   return (
-    <div className="rounded-xl border border-navy-700 bg-navy-800 p-4 sm:p-5">
+    <div className="rounded-xl border border-border bg-bg-card p-4 shadow-sm sm:p-5">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         className="flex w-full items-center justify-between"
       >
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Talere</h2>
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted">Talere</h2>
         <svg
-          className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+          className={`h-4 w-4 text-text-muted transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
           fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
@@ -71,19 +71,19 @@ export default function SpeakerRenamePanel({ sessionId, transcriptionTexts, onRe
         <div className="mt-3 space-y-2">
           {speakers.map((speaker) => (
             <div key={speaker} className="flex items-center gap-3">
-              <span className="min-w-[100px] text-sm text-gray-400">{speaker}</span>
+              <span className="min-w-[100px] text-sm text-text-secondary">{speaker}</span>
               <input
                 type="text"
                 value={names[speaker] ?? speaker}
                 onChange={(e) => setNames((prev) => ({ ...prev, [speaker]: e.target.value }))}
-                className="flex-1 rounded-lg border border-navy-600 bg-navy-700 px-3 py-1.5 text-sm text-gray-200 outline-none focus:border-accent"
+                className="flex-1 rounded-lg border border-border bg-bg-input px-3 py-1.5 text-sm text-text-primary outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
               />
             </div>
           ))}
           <button
             disabled={!hasChanges || saving}
             onClick={handleSave}
-            className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-navy-900 transition-opacity hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? 'Omdøber...' : 'Omdøb'}
           </button>

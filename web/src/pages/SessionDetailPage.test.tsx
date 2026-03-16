@@ -201,21 +201,18 @@ describe('SessionDetailPage', () => {
     expect(api.memos.regenerate).toHaveBeenCalledWith('sess1', 'summary', undefined);
   });
 
-  test('shows context when session has context', async () => {
-    const user = userEvent.setup();
+  test('shows context when session has context and no memo', async () => {
     vi.mocked(api.sessions.get).mockResolvedValue({
       ...mockDetail,
-      session: { ...mockDetail.session, context: 'Møde med København' },
+      session: { ...mockDetail.session, status: 'processing', context: 'Møde med København' },
     });
-    vi.mocked(api.memos.get).mockResolvedValue(mockMemo);
+    vi.mocked(api.memos.get).mockRejectedValue({ status: 404 });
 
     renderPage();
 
     await waitFor(() => {
       expect(screen.getByText(/kontekst/i)).toBeInTheDocument();
     });
-    // Context section is collapsed when memo is loaded — expand it
-    await user.click(screen.getByText(/kontekst/i));
     const contextParagraph = screen.getByText('Møde med København', { selector: 'p' });
     expect(contextParagraph).toBeInTheDocument();
   });
