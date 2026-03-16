@@ -37,6 +37,7 @@ export default function SessionDetailPage() {
   const [retrying, setRetrying] = useState(false);
   const [contextOpen, setContextOpen] = useState(true);
   const [chunksOpen, setChunksOpen] = useState(true);
+  const [regenerateOpen, setRegenerateOpen] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
@@ -185,7 +186,7 @@ export default function SessionDetailPage() {
   );
 
   return (
-    <div className="space-y-6 animate-[fadeInUp_0.3s_ease-out]">
+    <div className="space-y-4 animate-[fadeInUp_0.3s_ease-out]">
       <PageHeader
         breadcrumb={[{ label: 'Sessions', to: '/' }]}
         title={session.title ?? 'Session'}
@@ -281,8 +282,27 @@ export default function SessionDetailPage() {
       )}
 
       {(session.status === 'completed' || session.status === 'failed') && memo && (
-        <div className="rounded-xl border border-border bg-bg-card p-5 shadow-sm space-y-4">
-          <h3 className="font-heading text-sm font-semibold text-text-primary">Regenerate Memo</h3>
+        <div className="rounded-xl border border-border bg-bg-card p-4 shadow-sm">
+          <button
+            type="button"
+            onClick={() => setRegenerateOpen((o) => !o)}
+            className="flex w-full items-center justify-between"
+          >
+            <div className="flex items-center gap-2">
+              <svg className="h-4 w-4 text-text-muted" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M21.015 4.356v4.992" />
+              </svg>
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-text-muted">Regenerate Memo</h2>
+            </div>
+            <svg
+              className={`h-4 w-4 text-text-muted transition-transform duration-200 ${regenerateOpen ? 'rotate-180' : ''}`}
+              fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+            </svg>
+          </button>
+          {regenerateOpen && (
+          <div className="mt-3 space-y-4">
           <div className="flex flex-wrap items-end gap-3">
             <div className="flex-1 min-w-[200px]">
               <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Output mode</label>
@@ -328,6 +348,8 @@ export default function SessionDetailPage() {
               className="mt-1 w-full resize-none rounded-lg border border-border bg-bg-input px-3 py-2.5 text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-accent focus:ring-2 focus:ring-accent/20"
             />
           </div>
+          </div>
+          )}
         </div>
       )}
 
