@@ -1,0 +1,22 @@
+name: Purge ACR Images
+
+on:
+  schedule:
+    - cron: '0 0 * * 0'
+  workflow_dispatch:
+
+jobs:
+  purge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Purge old images
+        run: |
+          ACR_NAME=$(echo "${{ secrets.ACR_LOGIN_SERVER }}" | sed 's/.azurecr.io//')
+          az acr run \
+            --cmd "acr purge --filter 'mymemo-api:.*' --filter 'mymemo-worker:.*' --ago 0d --keep 4 --untagged" \
+            --registry "$ACR_NAME" \
+            /dev/null
