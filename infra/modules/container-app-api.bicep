@@ -96,10 +96,40 @@ resource apiApp 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'Clerk__PublishableKey', value: clerkPublishableKey }
             { name: 'Clerk__Domain', value: clerkDomain }
           ]
+          probes: [
+            {
+              type: 'Startup'
+              httpGet: {
+                path: '/ready'
+                port: 8080
+              }
+              initialDelaySeconds: 2
+              periodSeconds: 3
+              failureThreshold: 20
+            }
+            {
+              type: 'Liveness'
+              httpGet: {
+                path: '/health'
+                port: 8080
+              }
+              periodSeconds: 30
+              failureThreshold: 3
+            }
+            {
+              type: 'Readiness'
+              httpGet: {
+                path: '/ready'
+                port: 8080
+              }
+              periodSeconds: 10
+              failureThreshold: 3
+            }
+          ]
         }
       ]
       scale: {
-        minReplicas: 0
+        minReplicas: 1
         maxReplicas: 2
         rules: [
           {

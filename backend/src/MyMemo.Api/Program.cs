@@ -75,8 +75,20 @@ builder.Services.AddScoped<IMemoTriggerService, MemoTriggerService>();
 
 var app = builder.Build();
 
-// Initialize database
-await DatabaseInitializer.Initialize(app.Services.GetRequiredService<IDbConnectionFactory>());
+// Initialize database in background so health probe responds immediately
+var dbReady = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+_ = Task.Run(async () =>
+{
+    try
+    {
+        await DatabaseInitializer.Initialize(app.Services.GetRequiredService<IDbConnectionFactory>());
+        dbReady.SetResult();
+    }
+    catch (Exception ex)
+    {
+        dbReady.SetException(ex);
+    }
+});
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -93,12 +105,20 @@ app.UseExceptionHandler(err => err.Run(async context =>
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Liveness probe — always responds (container is alive)
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+// Readiness probe — only healthy after DB init completes
+app.MapGet("/ready", () => dbReady.Task.IsCompletedSuccessfully
+    ? Results.Ok(new { status = "ready" })
+    : Results.StatusCode(503));
 SessionEndpoints.Map(app);
 ChunkEndpoints.Map(app);
 MemoEndpoints.Map(app);
 InfographicEndpoints.Map(app);
 TagEndpoints.Map(app);
+
+// Ensure DB is initialized before accepting traffic
+await dbReady.Task;
 
 app.Run();
 
