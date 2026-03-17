@@ -62,12 +62,22 @@ builder.Services.AddHostedService<BatchTranscriptionPollWorker>();
 
 var host = builder.Build();
 
-// Initialize database
-await DatabaseInitializer.Initialize(host.Services.GetRequiredService<IDbConnectionFactory>());
+// Initialize database with retry-aware connection before starting workers
+var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+try
+{
+    await DatabaseInitializer.Initialize(host.Services.GetRequiredService<IDbConnectionFactory>());
+    logger.LogInformation("Database initialized successfully");
+}
+catch (Exception ex)
+{
+    logger.LogError(ex, "Database initialization failed — retrying in 5s");
+    await Task.Delay(TimeSpan.FromSeconds(5));
+    await DatabaseInitializer.Initialize(host.Services.GetRequiredService<IDbConnectionFactory>());
+}
 
 // Log configured model names
 var openAiOptions = host.Services.GetRequiredService<IOptions<AzureOpenAIOptions>>().Value;
-var logger = host.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
 logger.LogInformation("Whisper deployment: {WhisperDeployment}, GPT deployment: {GptDeployment}",
     openAiOptions.WhisperDeployment, openAiOptions.GptDeployment);
 

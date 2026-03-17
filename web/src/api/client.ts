@@ -36,6 +36,17 @@ interface RequestOptions extends RequestInit {
   noContent?: boolean;
 }
 
+const REQUEST_TIMEOUT_MS = 30_000;
+const MAX_RETRIES = 3;
+const RETRY_BASE_MS = 1_000;
+
+function isRetryable(error: unknown): boolean {
+  if (error instanceof ApiError) {
+    return error.status === 502 || error.status === 503 || error.status === 504;
+  }
+  return error instanceof TypeError || error instanceof DOMException;
+}
+
 async function request<T>(
   path: string,
   options?: RequestOptions,
@@ -47,17 +58,44 @@ async function request<T>(
     ...(fetchOptions.headers as Record<string, string>),
   };
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...fetchOptions,
-    headers,
-  });
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+    if (attempt > 0) {
+      await new Promise(r => setTimeout(r, RETRY_BASE_MS * Math.pow(2, attempt - 1)));
+    }
 
-  if (!res.ok) {
-    throw new ApiError(res.status, await res.text());
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+    try {
+      const res = await fetch(`${API_BASE}${path}`, {
+        ...fetchOptions,
+        headers,
+        signal: fetchOptions.signal ?? controller.signal,
+      });
+
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        const err = new ApiError(res.status, await res.text());
+        if (attempt < MAX_RETRIES && isRetryable(err)) {
+          lastError = err;
+          continue;
+        }
+        throw err;
+      }
+
+      if (noContent || res.status === 204) return undefined as T;
+      return res.json();
+    } catch (error) {
+      clearTimeout(timeout);
+      lastError = error;
+      if (attempt < MAX_RETRIES && isRetryable(error)) continue;
+      throw error;
+    }
   }
 
-  if (noContent || res.status === 204) return undefined as T;
-  return res.json();
+  throw lastError;
 }
 
 export const api = {
